@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --font-serif: 'Newsreader', 'Playfair Display', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --paper-bg: #FAF7F2;
+  --paper-card: #FFFFFF;
+  --paper-sidebar: #F5EFEB;
+  --border-warm: #EAE2D6;
+  --terracotta: #B8533C;
+  --terracotta-hover: #9E3E28;
+  --ink-primary: #2D2623;
+  --ink-secondary: #5D544F;
+  --ink-muted: #8A8077;
+  --sage-bg: #E8EFEA;
+  --sage-text: #36533E;
+}
+
+body {
+  background-color: var(--paper-bg);
+  color: var(--ink-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Custom Terracotta Range Slider */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: #EAE2D6;
+  border-radius: 9999px;
+  outline: none;
+  transition: background 0.15s ease-in-out;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 2px solid #B8533C;
+  box-shadow: 0 1px 4px rgba(74, 58, 48, 0.2);
+  cursor: pointer;
+  transition: transform 0.1s ease, border-color 0.1s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  border-color: #8E321E;
+}
+
+input[type="range"]::-webkit-slider-thumb:active {
+  transform: scale(1.05);
+  background: #FAF1EE;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 2px solid #B8533C;
+  box-shadow: 0 1px 4px rgba(74, 58, 48, 0.2);
+  cursor: pointer;
+}
+
+/* Custom Scrollbar for subtle elegance */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #D9CEBF;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #BAAC9C;
+}
+
+/* Accessible focus ring */
+*:focus-visible {
+  outline: 2px solid #B8533C;
+  outline-offset: 2px;
+}

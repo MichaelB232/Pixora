@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./pixora.db"
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  name        String        @default("Untitled Project")
+  imageName   String        @default("cosmos.jpg")
+  width       Int           @default(2400)
+  height      Int           @default(1800)
+  format      String        @default("JPG")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  history     HistoryStep[]
+  presets     Preset[]
+}
+
+model HistoryStep {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  stepIndex   Int
+  module      String   // "editor", "restoration", "creative", "vision", "scanner"
+  algorithm   String   // e.g. "brightness", "gaussian_blur", "sobel", "perspective"
+  label       String   // e.g. "Brightness +20"
+  parameters  String   // JSON string of parameters
+  appliedAt   DateTime @default(now())
+}
+
+model Preset {
+  id          String   @id @default(cuid())
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  module      String
+  algorithm   String
+  parameters  String   // JSON string of parameters
+  createdAt   DateTime @default(now())
+}
+
+model ExportLog {
+  id         String   @id @default(cuid())
+  fileName   String
+  format     String   // PNG, JPG, WebP
+  quality    Int?     // For JPG
+  dimensions String
+  stepsCount Int      @default(0)
+  exportedAt DateTime @default(now())
+}
