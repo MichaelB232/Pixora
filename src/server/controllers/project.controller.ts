@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { projectService } from "../services/project.service";
+import {
+  createProjectSchema,
+  updateProjectSchema,
+  projectIdSchema,
+} from "../schemas/project.schema";
 
 export class ProjectController {
   static async list() {
@@ -16,7 +21,19 @@ export class ProjectController {
 
   static async get(id: string) {
     try {
-      const project = await projectService.getProjectById(id);
+      const idValidation = projectIdSchema.safeParse({ id });
+      if (!idValidation.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Validation failed",
+            details: idValidation.error.flatten(),
+          },
+          { status: 400 }
+        );
+      }
+
+      const project = await projectService.getProjectById(idValidation.data.id);
       if (!project) {
         return NextResponse.json(
           { success: false, error: "Project not found" },
@@ -35,7 +52,20 @@ export class ProjectController {
   static async create(request: NextRequest) {
     try {
       const body = await request.json();
-      const project = await projectService.createProject(body);
+      const validation = createProjectSchema.safeParse(body);
+
+      if (!validation.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Validation failed",
+            details: validation.error.flatten(),
+          },
+          { status: 400 }
+        );
+      }
+
+      const project = await projectService.createProject(validation.data);
       return NextResponse.json({ success: true, data: project }, { status: 201 });
     } catch (error: any) {
       return NextResponse.json(
@@ -47,8 +77,36 @@ export class ProjectController {
 
   static async update(id: string, request: NextRequest) {
     try {
+      const idValidation = projectIdSchema.safeParse({ id });
+      if (!idValidation.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Validation failed",
+            details: idValidation.error.flatten(),
+          },
+          { status: 400 }
+        );
+      }
+
       const body = await request.json();
-      const updated = await projectService.updateProject(id, body);
+      const bodyValidation = updateProjectSchema.safeParse(body);
+
+      if (!bodyValidation.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Validation failed",
+            details: bodyValidation.error.flatten(),
+          },
+          { status: 400 }
+        );
+      }
+
+      const updated = await projectService.updateProject(
+        idValidation.data.id,
+        bodyValidation.data
+      );
       return NextResponse.json({ success: true, data: updated });
     } catch (error: any) {
       return NextResponse.json(
@@ -60,8 +118,23 @@ export class ProjectController {
 
   static async delete(id: string) {
     try {
-      await projectService.deleteProject(id);
-      return NextResponse.json({ success: true, message: "Project deleted successfully" });
+      const idValidation = projectIdSchema.safeParse({ id });
+      if (!idValidation.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Validation failed",
+            details: idValidation.error.flatten(),
+          },
+          { status: 400 }
+        );
+      }
+
+      await projectService.deleteProject(idValidation.data.id);
+      return NextResponse.json({
+        success: true,
+        message: "Project deleted successfully",
+      });
     } catch (error: any) {
       return NextResponse.json(
         { success: false, error: error.message || "Failed to delete project" },

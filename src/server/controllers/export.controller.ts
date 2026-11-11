@@ -1,25 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { exportService } from "../services/export.service";
+import {
+  logExportSchema,
+  generateReportSchema,
+} from "../schemas/export.schema";
 
 export class ExportController {
   static async log(request: NextRequest) {
     try {
       const body = await request.json();
-      if (!body.fileName || !body.format || !body.dimensions) {
+      const validation = logExportSchema.safeParse(body);
+
+      if (!validation.success) {
         return NextResponse.json(
-          { success: false, error: "Missing required export parameters" },
+          {
+            success: false,
+            error: "Validation failed",
+            details: validation.error.flatten(),
+          },
           { status: 400 }
         );
       }
 
-      const log = await exportService.logExport({
-        fileName: body.fileName,
-        format: body.format,
-        quality: body.quality,
-        dimensions: body.dimensions,
-        stepsCount: body.stepsCount || 0,
-      });
-
+      const log = await exportService.logExport(validation.data);
       return NextResponse.json({ success: true, data: log }, { status: 201 });
     } catch (error: any) {
       return NextResponse.json(
@@ -44,7 +47,20 @@ export class ExportController {
   static async generateReport(request: NextRequest) {
     try {
       const body = await request.json();
-      const report = exportService.generateProcessingReport(body);
+      const validation = generateReportSchema.safeParse(body);
+
+      if (!validation.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Validation failed",
+            details: validation.error.flatten(),
+          },
+          { status: 400 }
+        );
+      }
+
+      const report = exportService.generateProcessingReport(validation.data);
       return NextResponse.json({ success: true, data: report });
     } catch (error: any) {
       return NextResponse.json(

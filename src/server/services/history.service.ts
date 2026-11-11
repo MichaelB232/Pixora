@@ -1,13 +1,5 @@
 import { db } from "../db";
-
-export interface RecordStepInput {
-  projectId: string;
-  stepIndex: number;
-  module: string;
-  algorithm: string;
-  label: string;
-  parameters: Record<string, unknown> | string;
-}
+import { RecordHistoryStepInput } from "../schemas/history.schema";
 
 export class HistoryService {
   async getHistoryByProject(projectId: string) {
@@ -17,7 +9,7 @@ export class HistoryService {
     });
   }
 
-  async recordStep(input: RecordStepInput) {
+  async recordStep(input: RecordHistoryStepInput) {
     const paramsString =
       typeof input.parameters === "string"
         ? input.parameters

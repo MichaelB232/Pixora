@@ -1,13 +1,5 @@
 import { db } from "../db";
-
-export interface CreatePresetInput {
-  projectId?: string;
-  name: string;
-  description?: string;
-  module: string;
-  algorithm: string;
-  parameters: Record<string, unknown> | string;
-}
+import { CreatePresetInput } from "../schemas/preset.schema";
 
 export class PresetService {
   async getAllPresets(module?: string) {

@@ -1,12 +1,5 @@
 import { db } from "../db";
-
-export interface LogExportInput {
-  fileName: string;
-  format: string;
-  quality?: number;
-  dimensions: string;
-  stepsCount: number;
-}
+import { LogExportInput, GenerateReportInput } from "../schemas/export.schema";
 
 export class ExportService {
   async logExport(input: LogExportInput) {
@@ -28,20 +21,7 @@ export class ExportService {
     });
   }
 
-  generateProcessingReport(data: {
-    projectName: string;
-    imageName: string;
-    dimensions: string;
-    format: string;
-    history: Array<{
-      stepIndex: number;
-      module: string;
-      algorithm: string;
-      label: string;
-      parameters: any;
-      appliedAt: string;
-    }>;
-  }) {
+  generateProcessingReport(data: GenerateReportInput) {
     const timestamp = new Date().toISOString();
     return {
       title: "PIXORA Processing Audit Report",

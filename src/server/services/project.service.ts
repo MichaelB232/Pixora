@@ -1,12 +1,5 @@
 import { db } from "../db";
-
-export interface CreateProjectInput {
-  name?: string;
-  imageName?: string;
-  width?: number;
-  height?: number;
-  format?: string;
-}
+import { CreateProjectInput, UpdateProjectInput } from "../schemas/project.schema";
 
 export class ProjectService {
   async getAllProjects() {
@@ -35,16 +28,16 @@ export class ProjectService {
   async createProject(input: CreateProjectInput) {
     return await db.project.create({
       data: {
-        name: input.name || "Untitled Project",
-        imageName: input.imageName || "cosmos.jpg",
-        width: input.width || 2400,
-        height: input.height || 1800,
-        format: input.format || "JPG",
+        name: input.name,
+        imageName: input.imageName,
+        width: input.width,
+        height: input.height,
+        format: input.format,
       },
     });
   }
 
-  async updateProject(id: string, input: Partial<CreateProjectInput>) {
+  async updateProject(id: string, input: UpdateProjectInput) {
     return await db.project.update({
       where: { id },
       data: input,

@@ -49,18 +49,24 @@
 
 ## 3. Monolith Backend Architecture
 
-Built with TypeScript and structured into three clean, developer-friendly tiers:
+Built with TypeScript and structured into clean, strictly decoupled tiers with **Zod** schema validation:
 
 ```
 src/
 ├── server/
 │   ├── db.ts                      # Prisma client singleton (SQLite connection)
-│   ├── services/                  # Business Logic Layer (Prisma Queries)
+│   ├── schemas/                   # Validation & DTO Schema Layer (Zod)
+│   │   ├── project.schema.ts      # Project input schemas & inferred types
+│   │   ├── history.schema.ts      # Session history step schemas
+│   │   ├── preset.schema.ts       # Algorithm preset schemas
+│   │   ├── export.schema.ts       # Export logging & report schemas
+│   │   └── index.ts               # Barrel export
+│   ├── services/                  # Business Logic Layer (Prisma queries & data operations)
 │   │   ├── project.service.ts     # Project CRUD operations
 │   │   ├── history.service.ts     # Audit steps logging and retrieval
 │   │   ├── preset.service.ts      # Algorithm parameter preset management
 │   │   └── export.service.ts      # Export audit logging & report generator
-│   └── controllers/               # Controller Layer (Request validation & HTTP orchestration)
+│   └── controllers/               # Controller Layer (Zod validation & HTTP orchestration)
 │       ├── project.controller.ts
 │       ├── history.controller.ts
 │       ├── preset.controller.ts
@@ -70,6 +76,7 @@ src/
     ├── projects/[id]/route.ts     # GET, PATCH, DELETE /api/projects/[id]
     ├── history/route.ts           # GET, POST, DELETE /api/history
     ├── presets/route.ts           # GET, POST /api/presets
+    ├── presets/[id]/route.ts      # DELETE /api/presets/[id]
     ├── export-log/route.ts        # GET, POST /api/export-log
     └── report/route.ts            # POST /api/report
 ```

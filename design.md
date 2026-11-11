@@ -104,25 +104,33 @@ All image manipulation algorithms run directly in the client's browser utilizing
   4. **Computer Vision Lab:** Sobel, Prewitt, Laplacian, Canny Edge Detection, Morphology (Erosion, Dilation, Opening, Closing), Contours, Watershed, Color Segmentation.
   5. **Document Scanner:** Quad Corner Detection, Bilinear Perspective Warp Straightener, Document Binarization, Contrast Enhancement.
 
-### 6.2 Monolith Backend Architecture (TypeScript + SQLite + Prisma)
+### 6.2 Monolith Backend Architecture (TypeScript + Zod + SQLite + Prisma)
 ```
 src/
 ├── server/
-│   ├── db.ts                      # Prisma client singleton
-│   ├── services/                  # Business logic and database operations
-│   │   ├── project.service.ts
-│   │   ├── history.service.ts
-│   │   ├── preset.service.ts
-│   │   └── export.service.ts
-│   └── controllers/               # HTTP request orchestration and validation
+│   ├── db.ts                      # Prisma client singleton (SQLite connection)
+│   ├── schemas/                   # Zod Validation & DTO Schema Layer
+│   │   ├── project.schema.ts      # Project input schemas & infer types
+│   │   ├── history.schema.ts      # Session history step schemas
+│   │   ├── preset.schema.ts       # Algorithm preset schemas
+│   │   ├── export.schema.ts       # Export logging & report schemas
+│   │   └── index.ts               # Barrel export
+│   ├── services/                  # Business Logic Layer (Prisma queries & data operations)
+│   │   ├── project.service.ts     # Project CRUD operations
+│   │   ├── history.service.ts     # Audit steps logging and retrieval
+│   │   ├── preset.service.ts      # Algorithm parameter preset management
+│   │   └── export.service.ts      # Export audit logging & report generator
+│   └── controllers/               # Controller Layer (Zod validation & HTTP orchestration)
 │       ├── project.controller.ts
 │       ├── history.controller.ts
 │       ├── preset.controller.ts
 │       └── export.controller.ts
-└── app/api/                       # Clean Next.js route handlers
-    ├── projects/route.ts
-    ├── history/route.ts
-    ├── presets/route.ts
-    ├── export-log/route.ts
-    └── report/route.ts
+└── app/api/                       # Route Handlers (ROUTES)
+    ├── projects/route.ts          # GET /api/projects, POST /api/projects
+    ├── projects/[id]/route.ts     # GET, PATCH, DELETE /api/projects/[id]
+    ├── history/route.ts           # GET, POST, DELETE /api/history
+    ├── presets/route.ts           # GET, POST /api/presets
+    ├── presets/[id]/route.ts      # DELETE /api/presets/[id]
+    ├── export-log/route.ts        # GET, POST /api/export-log
+    └── report/route.ts            # POST /api/report
 ```
