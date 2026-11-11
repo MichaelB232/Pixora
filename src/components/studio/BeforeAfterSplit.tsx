@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Undo, Redo, ZoomIn, Maximize2 } from "lucide-react";
+import { Undo, Redo, ArrowLeftRight } from "lucide-react";
 import { useStudio } from "@/lib/image-processing/context";
 
 interface BeforeAfterSplitProps {
@@ -25,6 +25,7 @@ export function BeforeAfterSplit({ className, showToolbar = true }: BeforeAfterS
   const [sliderPos, setSliderPos] = useState<number>(50); // percentage 0 - 100
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [zoomMode, setZoomMode] = useState<"fit" | "fill" | "100%">("fit");
+  const [isSwapped, setIsSwapped] = useState<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const originalCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -33,7 +34,7 @@ export function BeforeAfterSplit({ className, showToolbar = true }: BeforeAfterS
   // Active modified image (preview takes precedence if active)
   const activeModified = previewImage || currentImage;
 
-  // Render ImageData into canvases
+  // Render ImageData into original canvas
   useEffect(() => {
     if (!originalImage || !originalCanvasRef.current) return;
     const canvas = originalCanvasRef.current;
@@ -45,6 +46,7 @@ export function BeforeAfterSplit({ className, showToolbar = true }: BeforeAfterS
     }
   }, [originalImage]);
 
+  // Render ImageData into modified canvas
   useEffect(() => {
     if (!activeModified || !modifiedCanvasRef.current) return;
     const canvas = modifiedCanvasRef.current;
@@ -100,6 +102,10 @@ export function BeforeAfterSplit({ className, showToolbar = true }: BeforeAfterS
     };
   }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove]);
 
+  // Left & Right labels based on swap state
+  const leftLabel = isSwapped ? "Your edit" : "Original";
+  const rightLabel = isSwapped ? "Original" : "Your edit";
+
   return (
     <div className={`flex flex-col w-full ${className || ""}`}>
       {/* Top Toolbar */}
@@ -115,7 +121,7 @@ export function BeforeAfterSplit({ className, showToolbar = true }: BeforeAfterS
             </span>
           </div>
 
-          {/* Controls: Undo, Redo, Zoom */}
+          {/* Controls: Undo, Redo, Swap, Zoom */}
           <div className="flex items-center gap-2">
             <button
               onClick={undo}
@@ -134,6 +140,14 @@ export function BeforeAfterSplit({ className, showToolbar = true }: BeforeAfterS
             >
               <Redo size={13} />
               <span>Redo</span>
+            </button>
+            <button
+              onClick={() => setIsSwapped(!isSwapped)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#EAE2D6] bg-white text-xs font-medium text-[#4A403A] hover:bg-[#F5EFEB] transition-all shadow-xs"
+              title="Swap Left and Right sides"
+            >
+              <ArrowLeftRight size={13} />
+              <span className="hidden sm:inline">Swap sides</span>
             </button>
             <div className="relative">
               <select
@@ -176,10 +190,10 @@ export function BeforeAfterSplit({ className, showToolbar = true }: BeforeAfterS
           </div>
         )}
 
-        {/* Right layer: Modified / Edit Canvas (Full width underlying layer) */}
+        {/* Base Layer (Right of slider): Shows the filter/edit (or original if swapped) */}
         <div className="absolute inset-0 flex items-center justify-center p-2">
           <canvas
-            ref={modifiedCanvasRef}
+            ref={isSwapped ? originalCanvasRef : modifiedCanvasRef}
             className={`max-w-full max-h-full rounded-xl transition-transform ${
               zoomMode === "fill"
                 ? "w-full h-full object-cover"
@@ -190,37 +204,34 @@ export function BeforeAfterSplit({ className, showToolbar = true }: BeforeAfterS
           />
         </div>
 
-        {/* Left layer: Original Canvas (Clipped by slider position) */}
+        {/* Overlay Layer (Left of slider): Clipped via hardware-accelerated clipPath */}
         <div
-          className="absolute inset-0 overflow-hidden flex items-center justify-center p-2 pointer-events-none"
-          style={{ width: `${sliderPos}%` }}
+          className="absolute inset-0 flex items-center justify-center p-2 pointer-events-none"
+          style={{
+            clipPath: `inset(0 ${100 - sliderPos}% 0 0)`,
+          }}
         >
-          <div
-            className="absolute inset-0 flex items-center justify-center p-2"
-            style={{ width: containerRef.current?.clientWidth || "100%" }}
-          >
-            <canvas
-              ref={originalCanvasRef}
-              className={`max-w-full max-h-full rounded-xl transition-transform ${
-                zoomMode === "fill"
-                  ? "w-full h-full object-cover"
-                  : zoomMode === "100%"
-                  ? "object-none"
-                  : "object-contain"
-              }`}
-            />
-          </div>
+          <canvas
+            ref={isSwapped ? modifiedCanvasRef : originalCanvasRef}
+            className={`max-w-full max-h-full rounded-xl transition-transform ${
+              zoomMode === "fill"
+                ? "w-full h-full object-cover"
+                : zoomMode === "100%"
+                ? "object-none"
+                : "object-contain"
+            }`}
+          />
         </div>
 
         {/* Badges */}
         <div className="absolute top-4 left-4 z-20 pointer-events-none">
           <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-white/90 text-[#4A403A] backdrop-blur-xs shadow-xs border border-white/40">
-            Original
+            {leftLabel}
           </span>
         </div>
         <div className="absolute top-4 right-4 z-20 pointer-events-none">
           <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-white/90 text-[#4A403A] backdrop-blur-xs shadow-xs border border-white/40">
-            Your edit
+            {rightLabel}
           </span>
         </div>
 
@@ -237,9 +248,9 @@ export function BeforeAfterSplit({ className, showToolbar = true }: BeforeAfterS
         </div>
       </div>
 
-      {/* Reassuring caption below preview */}
+      {/* Caption below preview */}
       <div className="mt-2 text-center text-xs text-[#8A8077]">
-        Drag to compare. Your original stays untouched.
+        Dari kiri (Original) ke kanan (Your edit). Geser handle ⟷ untuk membandingkan.
       </div>
     </div>
   );
