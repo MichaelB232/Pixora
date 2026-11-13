@@ -1,13 +1,15 @@
 "use client";
 
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import Link from "next/link";
 import { StudioHeader } from "@/components/studio/StudioHeader";
 import { ReassuranceBanner } from "@/components/studio/ReassuranceBanner";
 import { useStudio } from "@/lib/image-processing/context";
-import { Clock, Undo, Redo, RotateCcw, CheckCircle, ArrowRight } from "lucide-react";
+import { Undo, Redo } from "lucide-react";
 
 export default function SessionHistoryPage() {
+  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+
   const {
     history,
     historyIndex,
@@ -16,23 +18,35 @@ export default function SessionHistoryPage() {
     redo,
     canUndo,
     canRedo,
-    revertToOriginal,
+    metadata,
+    downloadImage,
   } = useStudio();
+
+  const activeStep = history[historyIndex] || history[0];
+
+  // Render Preview Canvas for the selected active step
+  useEffect(() => {
+    if (!activeStep?.imageData || !previewCanvasRef.current) return;
+    const canvas = previewCanvasRef.current;
+    canvas.width = activeStep.imageData.width;
+    canvas.height = activeStep.imageData.height;
+    const ctx = canvas.getContext("2d");
+    if (ctx) ctx.putImageData(activeStep.imageData, 0, 0);
+  }, [activeStep]);
 
   return (
     <div className="flex flex-col min-h-full">
-      <StudioHeader
-        breadcrumb="Your studio / Session history"
-      />
+      <StudioHeader breadcrumb="Your studio / Session history" />
 
-      <main className="flex-1 p-4 md:p-8 max-w-5xl w-full mx-auto space-y-6">
+      <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto space-y-6 pb-16">
+        {/* Title Bar - Figma 6:277 */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-[#2D2623] tracking-tight">
-              Every step, remembered.
+              Every step is part of the story.
             </h1>
             <p className="text-xs sm:text-sm text-[#7A706A] mt-1">
-              Trace your creative decisions, jump backwards, or redo adjustments.
+              Go back, look again, or pick up right where you left off.
             </p>
           </div>
 
@@ -40,112 +54,168 @@ export default function SessionHistoryPage() {
             <button
               onClick={undo}
               disabled={!canUndo}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#EAE2D6] bg-white text-xs font-medium text-[#4A403A] hover:bg-[#F5EFEB] disabled:opacity-40 transition-all"
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-[#EAE2D6] bg-white text-xs sm:text-sm font-medium text-[#2D2623] hover:bg-[#F5EFEB] disabled:opacity-40 transition-all shadow-xs"
             >
               <Undo size={14} />
-              <span>Undo</span>
+              <span>↶ Undo</span>
             </button>
             <button
               onClick={redo}
               disabled={!canRedo}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#EAE2D6] bg-white text-xs font-medium text-[#4A403A] hover:bg-[#F5EFEB] disabled:opacity-40 transition-all"
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-[#EAE2D6] bg-white text-xs sm:text-sm font-medium text-[#2D2623] hover:bg-[#F5EFEB] disabled:opacity-40 transition-all shadow-xs"
             >
               <Redo size={14} />
-              <span>Redo</span>
+              <span>↷ Redo</span>
             </button>
-            <button
-              onClick={revertToOriginal}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#EAE2D6] bg-[#FAF1EE] text-[#B8533C] text-xs font-medium hover:bg-[#F6E4DE] transition-all"
+          </div>
+        </div>
+
+        {/* Navigation Tabs (Session History vs Processing Pipeline) */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#F5EFEB] p-1.5 rounded-2xl border border-[#EAE2D6]">
+          <div className="flex gap-1">
+            <button className="py-2 px-5 rounded-xl text-xs sm:text-sm font-bold bg-white text-[#2D2623] shadow-card font-serif">
+              Session history
+            </button>
+            <Link
+              href="/studio/pipeline"
+              className="py-2 px-5 rounded-xl text-xs sm:text-sm font-medium text-[#7A706A] hover:text-[#2D2623] transition-colors"
             >
-              <RotateCcw size={14} />
-              <span>Revert to original</span>
-            </button>
+              Processing pipeline
+            </Link>
           </div>
+          <span className="text-xs text-[#8A8077] px-3 font-medium">
+            {metadata.name} · This session only
+          </span>
         </div>
 
-        {/* Timeline list */}
-        <div className="bg-white rounded-3xl border border-[#EAE2D6] p-6 shadow-soft space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-[#EAE2D6]/80 text-xs">
-            <span className="font-semibold text-[#2D2623]">
-              Active Session Sequence ({history.length} {history.length === 1 ? "step" : "steps"})
-            </span>
-            <span className="text-[#8A8077]">
-              Current active state: Step {historyIndex + 1}
-            </span>
-          </div>
+        {/* Dual Column Layout: Timeline (Left) + Selected Preview (Right) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left Column: Session Timeline (Figma 6:726) */}
+          <div className="lg:col-span-6 bg-white rounded-3xl border border-[#EAE2D6] p-5 sm:p-6 shadow-card space-y-5">
+            <div>
+              <h3 className="font-serif font-bold text-lg text-[#2D2623]">
+                Your creative trail
+              </h3>
+              <p className="text-xs text-[#7A706A] mt-0.5">
+                Current step:{" "}
+                <span className="font-semibold text-[#B8533C]">
+                  {activeStep?.label || "Original image"}
+                </span>
+              </p>
+            </div>
 
-          <div className="relative pl-6 space-y-6 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-[2px] before:bg-[#EAE2D6]">
-            {history.map((step, idx) => {
-              const isCurrent = idx === historyIndex;
-              const isPast = idx <= historyIndex;
+            {/* List of Steps */}
+            <div className="space-y-3">
+              {history.map((step, idx) => {
+                const isCurrent = idx === historyIndex;
+                const isFuture = idx > historyIndex;
+                const formattedNum = String(idx + 1).padStart(2, "0");
 
-              return (
-                <div
-                  key={step.id}
-                  className={`relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border transition-all ${
-                    isCurrent
-                      ? "bg-[#FAF1EE] border-[#EEC7BC] shadow-xs"
-                      : "bg-[#FAF7F2] border-[#EAE2D6]/80 hover:bg-[#F5EFEB]"
-                  }`}
-                >
-                  {/* Timeline bullet */}
+                return (
                   <div
-                    className={`absolute -left-[31px] top-5 w-4 h-4 rounded-full border-2 transition-colors ${
+                    key={step.id}
+                    onClick={() => jumpToStep(idx)}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex gap-4 items-center ${
                       isCurrent
-                        ? "bg-[#B8533C] border-white ring-4 ring-[#EEC7BC]"
-                        : isPast
-                        ? "bg-[#46654F] border-white"
-                        : "bg-white border-[#D0C7BD]"
+                        ? "bg-[#FAF1EE] border-[#EEC7BC] shadow-xs ring-1 ring-[#EEC7BC]"
+                        : isFuture
+                        ? "bg-[#FAF7F2]/50 border-dashed border-[#EAE2D6] opacity-60 hover:opacity-100"
+                        : "bg-[#FAF7F2] border-[#EAE2D6] hover:bg-[#F5EFEB]"
                     }`}
-                  />
-
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-white border border-[#EAE2D6] text-[#7A706A]">
-                        #{String(idx + 1).padStart(2, "0")}
-                      </span>
-                      <h4 className="font-serif font-bold text-sm text-[#2D2623]">
-                        {step.label}
-                      </h4>
-                      {isCurrent && (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#B8533C] text-white">
-                          Current view
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-xs text-[#7A706A] flex items-center gap-3">
-                      <span>Module: {step.module}</span>
-                      <span>•</span>
-                      <span>Algorithm: {step.algorithm}</span>
-                      <span>•</span>
-                      <span>Time: {step.timestamp}</span>
-                    </div>
-                    {step.parameters && Object.keys(step.parameters).length > 0 && (
-                      <div className="text-[11px] text-[#8A8077] font-mono bg-white/70 px-2.5 py-1 rounded-lg border border-[#EAE2D6] inline-block mt-1">
-                        params: {JSON.stringify(step.parameters)}
+                  >
+                    {/* Step Thumbnail */}
+                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-white border border-[#EAE2D6] shrink-0 flex items-center justify-center">
+                      <div className="font-serif font-bold text-xs text-[#7A706A]">
+                        {formattedNum}
                       </div>
-                    )}
-                  </div>
+                    </div>
 
-                  <div className="flex items-center gap-2 self-start sm:self-center">
-                    <button
-                      onClick={() => jumpToStep(idx)}
-                      disabled={isCurrent}
-                      className="px-3 py-1.5 rounded-xl border border-[#EAE2D6] bg-white text-xs font-medium text-[#2D2623] hover:bg-[#F5EFEB] disabled:opacity-40 transition-all shadow-xs"
-                    >
-                      {isCurrent ? "Active" : "Jump to this step"}
-                    </button>
+                    {/* Step Details */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold font-mono text-[#8A8077]">
+                          {formattedNum}
+                        </span>
+                        <span className="font-serif font-bold text-sm text-[#2D2623] truncate">
+                          {step.label}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-[#7A706A] mt-0.5">
+                        {idx === 0
+                          ? `${metadata.name} · ${metadata.width} × ${metadata.height} px`
+                          : `Applied in module: ${step.module}`}
+                      </div>
+                      <div className="mt-1.5 flex items-center gap-2">
+                        {isCurrent ? (
+                          <span className="text-[10px] font-bold text-[#B8533C] bg-white px-2 py-0.5 rounded-full border border-[#EEC7BC]">
+                            You are here
+                          </span>
+                        ) : isFuture ? (
+                          <span className="text-[10px] text-[#8A8077] italic">
+                            Undone · available with Redo
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-[#46654F] font-semibold">
+                            Step saved
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+
+            <div className="text-xs text-[#8A8077] pt-2 border-t border-[#EAE2D6]/70 italic">
+              Changing a past step starts a new trail from there.
+            </div>
+          </div>
+
+          {/* Right Column: Current History Preview (Figma 6:749) */}
+          <div className="lg:col-span-6 bg-white rounded-3xl border border-[#EAE2D6] p-5 sm:p-6 shadow-card space-y-4">
+            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-[#FAF7F2] border border-[#EAE2D6] flex items-center justify-center shadow-xs">
+              <canvas ref={previewCanvasRef} className="max-w-full max-h-full object-contain" />
+            </div>
+
+            <div>
+              <h3 className="font-serif font-bold text-lg text-[#2D2623]">
+                {activeStep?.label || "Original image"} · your current result
+              </h3>
+              <p className="text-xs text-[#7A706A] mt-0.5">
+                {historyIndex > 0
+                  ? `${historyIndex} applied adjustments. Original is still safe.`
+                  : "Original unedited photo. Ready for creativity."}
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <Link
+                href="/studio/editor"
+                className="bg-white hover:bg-[#F5EFEB] border border-[#EAE2D6] text-[#2D2623] py-3 rounded-xl font-medium text-xs sm:text-sm transition-all shadow-xs text-center"
+              >
+                Continue editing →
+              </Link>
+              <button
+                onClick={() => downloadImage("png", 92, "pixora-history-result")}
+                className="bg-[#B8533C] hover:bg-[#A1422E] text-white py-3 rounded-xl font-medium text-xs sm:text-sm transition-all shadow-xs active:scale-[0.99] text-center"
+              >
+                Export this image ↓
+              </button>
+            </div>
           </div>
         </div>
 
-        <ReassuranceBanner
-          title="Branch, jump, or restore without worry."
-          description="Your edits form a non-destructive session timeline. Jumping backward lets you inspect how the image looked at any stage."
-        />
+        {/* Safety Reminder Banner (Figma 6:757) */}
+        <div className="bg-[#FAF7F2] border border-[#EAE2D6] rounded-3xl p-5 sm:p-6 space-y-2 shadow-xs">
+          <h3 className="font-serif font-bold text-base text-[#2D2623]">
+            Nothing lovely needs to be rushed.
+          </h3>
+          <p className="text-xs sm:text-sm text-[#7A706A] leading-relaxed">
+            Undo and redo are here while you explore. Your session history isn’t a permanent backup.
+            Download the result you want to keep before closing or refreshing the session.
+          </p>
+        </div>
       </main>
     </div>
   );

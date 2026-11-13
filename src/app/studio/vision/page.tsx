@@ -1,10 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { StudioHeader } from "@/components/studio/StudioHeader";
-import { BeforeAfterSplit } from "@/components/studio/BeforeAfterSplit";
-import { StepsBar } from "@/components/studio/StepsBar";
 import { ReassuranceBanner } from "@/components/studio/ReassuranceBanner";
 import { useStudio } from "@/lib/image-processing/context";
 import {
@@ -21,7 +19,7 @@ import {
   applyHsvColorSegmentation,
 } from "@/lib/image-processing/vision";
 
-type VisionCategory = "edges" | "morphology" | "segmentation";
+type VisionCategory = "edges" | "morphology" | "contours" | "segmentation";
 
 interface VisionMethod {
   id: string;
@@ -38,21 +36,21 @@ interface VisionMethod {
 }
 
 const visionMethods: VisionMethod[] = [
-  // Edges
+  // Edge Detection
   {
     id: "canny",
-    name: "Canny Edge Detection",
-    title: "Multi-stage optimal edge detection",
-    description: "Applies Gaussian smoothing, gradient directional analysis, non-maximum suppression, and hysteresis thresholding.",
+    name: "Canny edge detection",
+    title: "Find where light changes sharply.",
+    description: "White lines show detected edges. Black areas have no detected edge.",
     category: "edges",
-    paramName: "Upper Threshold",
+    paramName: "Upper threshold",
     min: 30,
-    max: 120,
-    defaultVal: 70,
+    max: 200,
+    defaultVal: 150,
   },
   {
     id: "sobel",
-    name: "Sobel Operator",
+    name: "Sobel operator",
     title: "First-order spatial gradient magnitude",
     description: "Convolves 3×3 horizontal and vertical differential masks to highlight boundary rate of change.",
     category: "edges",
@@ -63,9 +61,9 @@ const visionMethods: VisionMethod[] = [
   },
   {
     id: "prewitt",
-    name: "Prewitt Operator",
+    name: "Prewitt operator",
     title: "Discrete differentiation edge detector",
-    description: "Computes discrete directional approximations of gradient vectors for contour extraction.",
+    description: "Computes directional approximations of gradient vectors for contour extraction.",
     category: "edges",
     paramName: "Sensitivity",
     min: 1,
@@ -74,7 +72,7 @@ const visionMethods: VisionMethod[] = [
   },
   {
     id: "laplacian",
-    name: "Laplacian Operator",
+    name: "Laplacian operator",
     title: "Second-order isotropic derivative",
     description: "Detects rapid intensity transitions and zero-crossings across all spatial orientations.",
     category: "edges",
@@ -86,11 +84,11 @@ const visionMethods: VisionMethod[] = [
   // Morphology
   {
     id: "erosion",
-    name: "Morphological Erosion",
+    name: "Morphological erosion",
     title: "Erode foreground boundaries",
     description: "Replaces pixel values with the local minimum in a structuring element, thinning light regions.",
     category: "morphology",
-    paramName: "Structuring Element Radius",
+    paramName: "Kernel Radius",
     min: 1,
     max: 4,
     defaultVal: 1,
@@ -98,11 +96,11 @@ const visionMethods: VisionMethod[] = [
   },
   {
     id: "dilation",
-    name: "Morphological Dilation",
+    name: "Morphological dilation",
     title: "Expand foreground boundaries",
     description: "Replaces pixel values with the local maximum in a structuring element, filling dark voids.",
     category: "morphology",
-    paramName: "Structuring Element Radius",
+    paramName: "Kernel Radius",
     min: 1,
     max: 4,
     defaultVal: 1,
@@ -110,11 +108,11 @@ const visionMethods: VisionMethod[] = [
   },
   {
     id: "opening",
-    name: "Morphological Opening",
+    name: "Morphological opening",
     title: "Erosion followed by Dilation",
     description: "Eliminates small bright noise specks and thin protrusions without altering overall object size.",
     category: "morphology",
-    paramName: "Structuring Element Radius",
+    paramName: "Kernel Radius",
     min: 1,
     max: 4,
     defaultVal: 1,
@@ -122,116 +120,133 @@ const visionMethods: VisionMethod[] = [
   },
   {
     id: "closing",
-    name: "Morphological Closing",
+    name: "Morphological closing",
     title: "Dilation followed by Erosion",
-    description: "Fills narrow channels, small holes, and breaks in contours while preserving outer shapes.",
+    description: "Fills small dark holes, gaps, and cracks within foreground features.",
     category: "morphology",
-    paramName: "Structuring Element Radius",
+    paramName: "Kernel Radius",
     min: 1,
     max: 4,
     defaultVal: 1,
     formatValue: (v) => `${v} px`,
   },
-  // Segmentation
+  // Contours
   {
     id: "contour",
-    name: "Contour Highlighting",
-    title: "Terracotta boundary extraction",
-    description: "Detects connected boundary paths and highlights them in warm terracotta over the image.",
-    category: "segmentation",
-    paramName: "Contour Threshold",
-    min: 20,
-    max: 100,
-    defaultVal: 50,
+    name: "Contour boundary tracing",
+    title: "Closed perimeter detection",
+    description: "Extracts continuous boundaries of connected components and draws outline traces.",
+    category: "contours",
+    paramName: "Threshold",
+    min: 30,
+    max: 200,
+    defaultVal: 100,
   },
+  // Segmentation
   {
     id: "watershed",
-    name: "Watershed Region Map",
-    title: "Topological marker segmentation",
-    description: "Treats image luminance as a topographic relief map to segment distinct watershed catchment basins.",
+    name: "Watershed segmentation",
+    title: "Topological gradient basin division",
+    description: "Treats image luminance as topographic elevation to divide pixels into catchment basins.",
     category: "segmentation",
-    paramName: "Basin Clusters",
-    min: 3,
-    max: 8,
-    defaultVal: 5,
-    formatValue: (v) => `${v} regions`,
+    paramName: "Basin Sensitivity",
+    min: 10,
+    max: 60,
+    defaultVal: 30,
   },
   {
     id: "hsv_seg",
-    name: "HSV Color Segmentation",
-    title: "Targeted chromatic mask",
-    description: "Isolates specific color hues (such as pink floral tones) while desaturating the background.",
+    name: "HSV color segmentation",
+    title: "Selective chromatic extraction",
+    description: "Isolates and highlights specific color bands while masking away distracting background hues.",
     category: "segmentation",
-    paramName: "Hue Center Angle",
+    paramName: "Target Hue",
     min: 0,
     max: 360,
-    defaultVal: 345,
+    defaultVal: 340,
     formatValue: (v) => `${v}°`,
   },
 ];
 
 export default function ComputerVisionPage() {
-  const { currentImage, applyStep, setLivePreview, isPreviewOn, setIsPreviewOn } = useStudio();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const sourceCanvasRef = useRef<HTMLCanvasElement>(null);
+  const resultCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  const {
+    currentImage,
+    originalImage,
+    metadata,
+    applyStep,
+    setLivePreview,
+    isPreviewOn,
+    loadImageFromFile,
+  } = useStudio();
+
   const [activeCategory, setActiveCategory] = useState<VisionCategory>("edges");
   const [selectedMethodId, setSelectedMethodId] = useState<string>("canny");
-  const [paramValue, setParamValue] = useState<number>(70);
+
+  // Dual Threshold parameters for Canny (Figma 6:535 & 6:538)
+  const [lowerThreshold, setLowerThreshold] = useState<number>(50);
+  const [upperThreshold, setUpperThreshold] = useState<number>(150);
+  const [paramValue, setParamValue] = useState<number>(5);
+  const [smoothingMode, setSmoothingMode] = useState<string>("5x5");
 
   const currentMethod =
     visionMethods.find((m) => m.id === selectedMethodId) || visionMethods[0];
 
-  const handleCategoryChange = (cat: VisionCategory) => {
-    setActiveCategory(cat);
-    const firstInCat = visionMethods.find((m) => m.category === cat);
-    if (firstInCat) {
-      setSelectedMethodId(firstInCat.id);
-      setParamValue(firstInCat.defaultVal);
-    }
-  };
+  const activeImage = currentImage || originalImage;
 
+  // Render Source Canvas
   useEffect(() => {
-    if (!currentImage) return;
+    if (!activeImage || !sourceCanvasRef.current) return;
+    const canvas = sourceCanvasRef.current;
+    canvas.width = activeImage.width;
+    canvas.height = activeImage.height;
+    const ctx = canvas.getContext("2d");
+    if (ctx) ctx.putImageData(activeImage, 0, 0);
+  }, [activeImage]);
 
-    if (!isPreviewOn) {
-      setLivePreview(null);
-      return;
-    }
+  // Compute live Vision Result
+  useEffect(() => {
+    if (!activeImage || !resultCanvasRef.current) return;
 
     try {
       let result: ImageData | null = null;
       switch (selectedMethodId) {
         case "canny":
-          result = applyCanny(currentImage, paramValue * 0.4, paramValue);
+          result = applyCanny(activeImage, lowerThreshold, upperThreshold);
           break;
         case "sobel":
-          result = applySobel(currentImage);
+          result = applySobel(activeImage);
           break;
         case "prewitt":
-          result = applyPrewitt(currentImage);
+          result = applyPrewitt(activeImage);
           break;
         case "laplacian":
-          result = applyLaplacian(currentImage);
+          result = applyLaplacian(activeImage);
           break;
         case "erosion":
-          result = applyErosion(currentImage, paramValue);
+          result = applyErosion(activeImage, paramValue);
           break;
         case "dilation":
-          result = applyDilation(currentImage, paramValue);
+          result = applyDilation(activeImage, paramValue);
           break;
         case "opening":
-          result = applyOpening(currentImage, paramValue);
+          result = applyOpening(activeImage, paramValue);
           break;
         case "closing":
-          result = applyClosing(currentImage, paramValue);
+          result = applyClosing(activeImage, paramValue);
           break;
         case "contour":
-          result = applyContourDetection(currentImage, paramValue);
+          result = applyContourDetection(activeImage, lowerThreshold);
           break;
         case "watershed":
-          result = applyWatershed(currentImage, paramValue);
+          result = applyWatershed(activeImage, paramValue * 5);
           break;
         case "hsv_seg":
           result = applyHsvColorSegmentation(
-            currentImage,
+            activeImage,
             (paramValue - 25 + 360) % 360,
             (paramValue + 25) % 360,
             15,
@@ -239,54 +254,74 @@ export default function ComputerVisionPage() {
           );
           break;
       }
-      setLivePreview(result);
+
+      if (result) {
+        const canvas = resultCanvasRef.current;
+        canvas.width = result.width;
+        canvas.height = result.height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) ctx.putImageData(result, 0, 0);
+      }
     } catch (e) {
-      console.error("Vision preview error:", e);
+      console.error("Vision calculation error:", e);
     }
-  }, [currentImage, selectedMethodId, paramValue, isPreviewOn, setLivePreview]);
+  }, [
+    activeImage,
+    selectedMethodId,
+    lowerThreshold,
+    upperThreshold,
+    paramValue,
+    smoothingMode,
+  ]);
+
+  const handleCategorySelect = (category: VisionCategory) => {
+    setActiveCategory(category);
+    const firstInCat = visionMethods.find((m) => m.category === category);
+    if (firstInCat) {
+      setSelectedMethodId(firstInCat.id);
+    }
+  };
 
   const handleApply = () => {
-    if (!currentImage) return;
-    let result = currentImage;
-    const formattedVal = currentMethod.formatValue
-      ? currentMethod.formatValue(paramValue)
-      : `${paramValue}`;
-    const label = `${currentMethod.name} (${formattedVal})`;
+    if (!activeImage) return;
+    let result: ImageData = activeImage;
+    let label = currentMethod.name;
 
     switch (selectedMethodId) {
       case "canny":
-        result = applyCanny(currentImage, paramValue * 0.4, paramValue);
+        result = applyCanny(activeImage, lowerThreshold, upperThreshold);
+        label = `Canny Edge (L:${lowerThreshold} / U:${upperThreshold})`;
         break;
       case "sobel":
-        result = applySobel(currentImage);
+        result = applySobel(activeImage);
         break;
       case "prewitt":
-        result = applyPrewitt(currentImage);
+        result = applyPrewitt(activeImage);
         break;
       case "laplacian":
-        result = applyLaplacian(currentImage);
+        result = applyLaplacian(activeImage);
         break;
       case "erosion":
-        result = applyErosion(currentImage, paramValue);
+        result = applyErosion(activeImage, paramValue);
         break;
       case "dilation":
-        result = applyDilation(currentImage, paramValue);
+        result = applyDilation(activeImage, paramValue);
         break;
       case "opening":
-        result = applyOpening(currentImage, paramValue);
+        result = applyOpening(activeImage, paramValue);
         break;
       case "closing":
-        result = applyClosing(currentImage, paramValue);
+        result = applyClosing(activeImage, paramValue);
         break;
       case "contour":
-        result = applyContourDetection(currentImage, paramValue);
+        result = applyContourDetection(activeImage, lowerThreshold);
         break;
       case "watershed":
-        result = applyWatershed(currentImage, paramValue);
+        result = applyWatershed(activeImage, paramValue * 5);
         break;
       case "hsv_seg":
         result = applyHsvColorSegmentation(
-          currentImage,
+          activeImage,
           (paramValue - 25 + 360) % 360,
           (paramValue + 25) % 360,
           15,
@@ -295,96 +330,148 @@ export default function ComputerVisionPage() {
         break;
     }
 
-    applyStep(label, "vision", selectedMethodId, { value: paramValue }, result);
+    applyStep(label, "vision", selectedMethodId, { lowerThreshold, upperThreshold, paramValue }, result);
   };
 
   const handleReset = () => {
+    setLowerThreshold(50);
+    setUpperThreshold(150);
     setParamValue(currentMethod.defaultVal);
-    setLivePreview(null);
   };
-
-  const currentPendingLabel = `${currentMethod.name} ${
-    currentMethod.formatValue ? currentMethod.formatValue(paramValue) : paramValue
-  }`;
 
   return (
     <div className="flex flex-col min-h-full">
-      <StudioHeader
-        breadcrumb="Your studio / Computer vision"
+      <StudioHeader breadcrumb="Your studio / Computer vision" />
+
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={(e) => {
+          if (e.target.files && e.target.files[0]) {
+            loadImageFromFile(e.target.files[0]);
+          }
+        }}
+        accept="image/png,image/jpeg,image/webp,image/jpg"
+        className="hidden"
       />
 
-      <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto space-y-6">
+      <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto space-y-6 pb-16">
+        {/* Header Title Bar - Figma 6:112 */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-[#2D2623] tracking-tight">
-              Look a little closer.
+              See what’s beneath the surface.
             </h1>
             <p className="text-xs sm:text-sm text-[#7A706A] mt-1">
-              Extract edges, examine morphology, and segment visual structures.
+              Explore the shapes and patterns hiding in your image.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="bg-white hover:bg-[#F5EFEB] border border-[#EAE2D6] text-[#2D2623] px-4 py-2.5 rounded-xl font-medium text-xs sm:text-sm transition-all shadow-xs active:scale-[0.98]"
+            >
+              Replace image
+            </button>
             <Link
               href="/studio/export"
               className="bg-[#B8533C] hover:bg-[#A1422E] text-white px-5 py-2.5 rounded-xl font-medium text-xs sm:text-sm transition-all shadow-xs active:scale-[0.98] inline-flex items-center gap-1.5"
             >
-              <span>Export image</span>
-              <span>→</span>
+              <span>Export edge map</span>
+              <span>↓</span>
             </Link>
           </div>
         </div>
 
+        {/* Vision Category Segmented Tabs (Figma 6:514) */}
+        <div className="bg-[#F5EFEB] p-1.5 rounded-2xl border border-[#EAE2D6] flex flex-wrap gap-1">
+          {(
+            [
+              { id: "edges", label: "Edge detection" },
+              { id: "morphology", label: "Morphology" },
+              { id: "contours", label: "Contours" },
+              { id: "segmentation", label: "Segmentation" },
+            ] as const
+          ).map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => handleCategorySelect(cat.id)}
+              className={`flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                activeCategory === cat.id
+                  ? "bg-white text-[#2D2623] shadow-card font-serif font-bold"
+                  : "text-[#7A706A] hover:text-[#2D2623]"
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Dual Layout: Side-by-Side Images (Left) + Controls (Right) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left Column: Side-by-Side Source vs Edge Map (Figma 6:520) */}
           <div className="lg:col-span-8 space-y-4">
-            <BeforeAfterSplit />
-            <StepsBar currentPendingLabel={currentPendingLabel} />
+            <div className="bg-white rounded-3xl border border-[#EAE2D6] p-4 sm:p-6 shadow-card space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Source Column */}
+                <div className="space-y-2">
+                  <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-[#FAF7F2] border border-[#EAE2D6] flex items-center justify-center">
+                    <canvas ref={sourceCanvasRef} className="max-w-full max-h-full object-contain" />
+                  </div>
+                  <div className="text-xs text-[#7A706A] px-1 font-medium">
+                    Original · {metadata.name}
+                  </div>
+                </div>
+
+                {/* Edge Map / Vision Output Column */}
+                <div className="space-y-2">
+                  <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-[#1E1917] border border-[#EAE2D6] flex items-center justify-center">
+                    <canvas ref={resultCanvasRef} className="max-w-full max-h-full object-contain" />
+                  </div>
+                  <div className="text-xs text-[#2D2623] px-1 font-bold">
+                    {currentMethod.name} output
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Understanding the result Card (Figma 6:549) */}
+            <div className="bg-[#FAF7F2] border border-[#EAE2D6] rounded-3xl p-5 sm:p-6 space-y-1.5 shadow-xs">
+              <h3 className="font-serif font-bold text-base text-[#2D2623]">
+                What am I looking at?
+              </h3>
+              <p className="text-xs sm:text-sm text-[#7A706A] leading-relaxed">
+                Edges reveal boundaries, not named objects. Try changing the thresholds to see how
+                fine details appear or disappear.
+              </p>
+            </div>
           </div>
 
+          {/* Right Column: Controls Panel (Figma 6:525) */}
           <div className="lg:col-span-4 bg-white rounded-3xl border border-[#EAE2D6] p-5 sm:p-6 shadow-card space-y-5">
             <div>
               <h3 className="font-serif font-bold text-lg text-[#2D2623]">
-                Computer Vision Analysis
+                Get to know your edges
               </h3>
               <p className="text-xs text-[#7A706A] mt-0.5">
-                Understand geometric and boundary structures.
+                Adjust parameters to isolate shape boundaries.
               </p>
             </div>
 
-            {/* Category tabs */}
-            <div className="grid grid-cols-3 bg-[#F5EFEB] p-1 rounded-xl gap-1 text-xs">
-              {(["edges", "morphology", "segmentation"] as const).map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => handleCategoryChange(cat)}
-                  className={`py-1.5 rounded-lg font-medium capitalize transition-all ${
-                    activeCategory === cat
-                      ? "bg-white text-[#2D2623] shadow-xs"
-                      : "text-[#7A706A] hover:text-[#2D2623]"
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-
-            {/* Method Select */}
+            {/* Algorithm Selector */}
             <div className="space-y-1.5">
               <label
-                htmlFor="vision-method-select"
+                htmlFor="vision-algo-select"
                 className="text-xs font-semibold text-[#8A8077]"
               >
                 Algorithm
               </label>
               <div className="relative">
                 <select
-                  id="vision-method-select"
+                  id="vision-algo-select"
                   value={selectedMethodId}
-                  onChange={(e) => {
-                    setSelectedMethodId(e.target.value);
-                    const found = visionMethods.find((m) => m.id === e.target.value);
-                    if (found) setParamValue(found.defaultVal);
-                  }}
+                  onChange={(e) => setSelectedMethodId(e.target.value)}
                   className="w-full appearance-none bg-[#FAF7F2] border border-[#EAE2D6] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-[#2D2623] focus:outline-none focus:border-[#B8533C] cursor-pointer"
                 >
                   {visionMethods
@@ -401,7 +488,7 @@ export default function ComputerVisionPage() {
               </div>
             </div>
 
-            {/* Descriptive Callout */}
+            {/* Algorithm Explanation Callout (Figma 6:531) */}
             <div className="bg-[#FAF1EE] border border-[#F4D4CD] rounded-2xl p-4 space-y-1">
               <h4 className="font-serif font-bold text-xs sm:text-sm text-[#863422]">
                 {currentMethod.title}
@@ -411,66 +498,101 @@ export default function ComputerVisionPage() {
               </p>
             </div>
 
-            {/* Slider */}
-            <div className="space-y-2 pt-1">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-[#2D2623]">
-                  {currentMethod.paramName}
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#FAF1EE] text-[#B8533C] border border-[#EEC7BC]">
-                  {currentMethod.formatValue
-                    ? currentMethod.formatValue(paramValue)
-                    : paramValue}
-                </span>
-              </div>
+            {/* Threshold Cards for Canny (Figma 6:535 & 6:538) */}
+            {selectedMethodId === "canny" ? (
+              <div className="space-y-3 pt-1">
+                <div className="text-xs font-semibold text-[#2D2623]">Thresholds</div>
 
-              <input
-                type="range"
-                min={currentMethod.min}
-                max={currentMethod.max}
-                step={currentMethod.step || 1}
-                value={paramValue}
-                onChange={(e) => setParamValue(parseFloat(e.target.value))}
-                aria-label={currentMethod.paramName}
-                className="w-full accent-[#B8533C]"
-              />
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Lower Threshold Card */}
+                  <div className="p-3.5 bg-[#FAF7F2] border border-[#EAE2D6] rounded-2xl space-y-1.5">
+                    <div className="text-[11px] font-semibold text-[#7A706A]">Lower</div>
+                    <div className="font-serif font-bold text-2xl text-[#2D2623]">
+                      {lowerThreshold}
+                    </div>
+                    <input
+                      type="range"
+                      min={10}
+                      max={120}
+                      value={lowerThreshold}
+                      onChange={(e) => setLowerThreshold(parseInt(e.target.value))}
+                      className="w-full accent-[#B8533C]"
+                      title="Adjust lower threshold"
+                    />
+                  </div>
 
-              <div className="flex justify-between text-[10px] text-[#A69D95]">
-                <span>{currentMethod.min}</span>
-                <span>{currentMethod.max}</span>
-              </div>
-            </div>
-
-            {/* Preview Toggle */}
-            <div className="flex items-center justify-between pt-1 border-t border-[#EAE2D6]/70">
-              <div>
-                <div className="text-xs font-medium text-[#2D2623]">
-                  Preview is on
+                  {/* Upper Threshold Card */}
+                  <div className="p-3.5 bg-[#FAF7F2] border border-[#EAE2D6] rounded-2xl space-y-1.5">
+                    <div className="text-[11px] font-semibold text-[#7A706A]">Upper</div>
+                    <div className="font-serif font-bold text-2xl text-[#2D2623]">
+                      {upperThreshold}
+                    </div>
+                    <input
+                      type="range"
+                      min={60}
+                      max={250}
+                      value={upperThreshold}
+                      onChange={(e) => setUpperThreshold(parseInt(e.target.value))}
+                      className="w-full accent-[#B8533C]"
+                      title="Adjust upper threshold"
+                    />
+                  </div>
                 </div>
-                <div className="text-[11px] text-[#8A8077]">
-                  View edge map and segmentation instantly.
+
+                <p className="text-[11px] text-[#8A8077] italic">
+                  Higher values keep only stronger edges.
+                </p>
+
+                {/* Gaussian smoothing selector */}
+                <div className="space-y-1.5 pt-1">
+                  <label className="text-xs font-semibold text-[#8A8077]">
+                    Gaussian smoothing
+                  </label>
+                  <select
+                    value={smoothingMode}
+                    onChange={(e) => setSmoothingMode(e.target.value)}
+                    className="w-full appearance-none bg-[#FAF7F2] border border-[#EAE2D6] rounded-xl px-3.5 py-2 text-xs sm:text-sm font-medium text-[#2D2623] focus:outline-none"
+                  >
+                    <option value="5x5">5 × 5 kernel · sigma 1.4</option>
+                    <option value="3x3">3 × 3 kernel · sigma 1.0</option>
+                    <option value="7x7">7 × 7 kernel · sigma 2.0</option>
+                  </select>
                 </div>
               </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={isPreviewOn}
-                aria-label="Toggle preview on or off"
-                onClick={() => setIsPreviewOn(!isPreviewOn)}
-                className={`w-11 h-6 rounded-full transition-colors relative p-0.5 ${
-                  isPreviewOn ? "bg-[#46654F]" : "bg-[#D9CEBF]"
-                }`}
-              >
-                <div
-                  className={`w-5 h-5 rounded-full bg-white shadow-xs transition-transform ${
-                    isPreviewOn ? "translate-x-5" : "translate-x-0"
-                  }`}
+            ) : (
+              /* Non-Canny Parameter Slider */
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[#2D2623]">
+                    {currentMethod.paramName}
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#FAF1EE] text-[#B8533C] border border-[#EEC7BC]">
+                    {currentMethod.formatValue
+                      ? currentMethod.formatValue(paramValue)
+                      : paramValue}
+                  </span>
+                </div>
+
+                <input
+                  type="range"
+                  min={currentMethod.min}
+                  max={currentMethod.max}
+                  step={currentMethod.step || 1}
+                  value={paramValue}
+                  onChange={(e) => setParamValue(parseFloat(e.target.value))}
+                  aria-label={currentMethod.paramName}
+                  className="w-full accent-[#B8533C]"
                 />
-              </button>
-            </div>
 
-            {/* Actions */}
-            <div className="space-y-2 pt-2">
+                <div className="flex justify-between text-[10px] text-[#A69D95]">
+                  <span>{currentMethod.min}</span>
+                  <span>{currentMethod.max}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="space-y-2 pt-2 border-t border-[#EAE2D6]/70">
               <button
                 onClick={handleApply}
                 className="w-full bg-[#B8533C] hover:bg-[#A1422E] text-white py-3 rounded-xl font-medium text-xs sm:text-sm transition-all shadow-xs active:scale-[0.99]"
@@ -482,15 +604,16 @@ export default function ComputerVisionPage() {
                 onClick={handleReset}
                 className="w-full py-2 text-xs font-semibold text-[#B8533C] hover:text-[#933B2B] transition-colors text-center"
               >
-                Reset parameters
+                Reset settings
               </button>
             </div>
           </div>
         </div>
 
+        {/* Experiment Encouragement Banner (Figma 6:552) */}
         <ReassuranceBanner
-          title="Analytical vision made approachable."
-          description="Edge maps and morphological operations highlight internal boundaries without destroying your session history."
+          title="A little experiment is a good way to learn."
+          description="Compare with your original, change one setting at a time, and follow your curiosity."
         />
       </main>
     </div>

@@ -31,3 +31,12 @@ next-env.d.ts
 
 # prisma SQLite local database
 *.db-journal
+
+# archives & media exclusions
+*.zip
+*.tar.gz
+*.png
+
+# editor & tool cache
+.figma/
+

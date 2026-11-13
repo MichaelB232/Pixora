@@ -248,9 +248,9 @@ export function BeforeAfterSplit({ className, showToolbar = true }: BeforeAfterS
         </div>
       </div>
 
-      {/* Caption below preview */}
-      <div className="mt-2 text-center text-xs text-[#8A8077]">
-        Dari kiri (Original) ke kanan (Your edit). Geser handle ⟷ untuk membandingkan.
+      {/* Caption below preview - Figma 3:261 */}
+      <div className="mt-2 text-center text-xs text-[#7A706A]">
+        Drag to compare. Your original stays untouched.
       </div>
     </div>
   );

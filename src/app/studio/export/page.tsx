@@ -5,20 +5,25 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { StudioHeader } from "@/components/studio/StudioHeader";
 import { useStudio } from "@/lib/image-processing/context";
-import { Check, Download, FileText } from "lucide-react";
 
 export default function ExportCenterPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { currentImage, originalImage, metadata, history, downloadImage, loadImageFromFile } =
-    useStudio();
+  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  const {
+    currentImage,
+    originalImage,
+    metadata,
+    history,
+    downloadImage,
+    loadImageFromFile,
+  } = useStudio();
 
   const [fileName, setFileName] = useState<string>("cosmos-edited");
   const [selectedFormat, setSelectedFormat] = useState<"png" | "jpeg" | "webp">("png");
-  const [jpegQuality, setJpegQuality] = useState<number>(92);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
-  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const activeImage = currentImage || originalImage;
 
   // Render preview canvas
@@ -28,62 +33,24 @@ export default function ExportCenterPage() {
     canvas.width = activeImage.width;
     canvas.height = activeImage.height;
     const ctx = canvas.getContext("2d");
-    if (ctx) {
-      ctx.putImageData(activeImage, 0, 0);
-    }
+    if (ctx) ctx.putImageData(activeImage, 0, 0);
   }, [activeImage]);
 
   const lastStep = history.length > 1 ? history[history.length - 1] : null;
 
   const handleDownload = () => {
     setIsDownloading(true);
-    downloadImage(selectedFormat, jpegQuality, fileName);
+    downloadImage(selectedFormat, 92, fileName);
     setTimeout(() => {
       setIsDownloading(false);
     }, 600);
-  };
-
-  const handleDownloadReport = async () => {
-    try {
-      const res = await fetch("/api/report", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          projectName: fileName,
-          imageName: metadata.name,
-          dimensions: `${metadata.width} × ${metadata.height} px`,
-          format: selectedFormat.toUpperCase(),
-          history: history.map((s) => ({
-            stepIndex: s.stepIndex,
-            module: s.module,
-            algorithm: s.algorithm,
-            label: s.label,
-            parameters: s.parameters,
-            appliedAt: s.timestamp,
-          })),
-        }),
-      });
-
-      const data = await res.json();
-      const reportBlob = new Blob([JSON.stringify(data.data, null, 2)], {
-        type: "application/json",
-      });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(reportBlob);
-      link.download = `${fileName}-processing-report.json`;
-      link.click();
-    } catch (e) {
-      console.error("Report download error:", e);
-    }
   };
 
   const formatExt = selectedFormat === "jpeg" ? ".jpg" : `.${selectedFormat}`;
 
   return (
     <div className="flex flex-col min-h-full">
-      <StudioHeader
-        breadcrumb="Your studio / Export center"
-      />
+      <StudioHeader breadcrumb="Your studio / Export center" />
 
       <input
         type="file"
@@ -98,8 +65,8 @@ export default function ExportCenterPage() {
         className="hidden"
       />
 
-      <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto space-y-6">
-        {/* Title Bar */}
+      <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto space-y-8 pb-16">
+        {/* Title Bar - Figma 3:8 */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-[#2D2623] tracking-tight">
@@ -112,34 +79,30 @@ export default function ExportCenterPage() {
 
           <Link
             href="/studio/editor"
-            className="bg-white hover:bg-[#F5EFEB] border border-[#EAE2D6] text-[#2D2623] px-4 py-2.5 rounded-xl font-medium text-xs sm:text-sm transition-all shadow-xs self-start"
+            className="bg-white hover:bg-[#F5EFEB] border border-[#EAE2D6] text-[#2D2623] px-5 py-2.5 rounded-xl font-medium text-xs sm:text-sm transition-all shadow-xs self-start"
           >
             ← Back to editing
           </Link>
         </div>
 
-        {/* 2-Column Grid matching Screenshot 3 */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left Column: Image Preview Card */}
-          <div className="lg:col-span-7 space-y-3">
-            <div className="rounded-3xl overflow-hidden border border-[#EAE2D6] bg-white p-3 shadow-card">
-              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-[#FAF7F2] flex items-center justify-center">
-                <canvas
-                  ref={previewCanvasRef}
-                  className="max-w-full max-h-full object-contain rounded-xl"
-                />
-              </div>
+        {/* Dual Layout: Preview (Left) + Export Settings (Right) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left Column: Final Image Preview (Figma 3:313) */}
+          <div className="lg:col-span-7 bg-white rounded-3xl border border-[#EAE2D6] p-5 sm:p-6 shadow-card space-y-4">
+            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-[#FAF7F2] border border-[#EAE2D6] flex items-center justify-center shadow-xs">
+              <canvas ref={previewCanvasRef} className="max-w-full max-h-full object-contain" />
             </div>
 
-            <div className="px-2 space-y-1">
-              <h3 className="font-serif font-bold text-base text-[#2D2623]">
-                {fileName}
+            <div className="space-y-1.5 pt-1">
+              <h3 className="font-serif font-bold text-lg text-[#2D2623]">
+                {fileName} · a little more sunshine
               </h3>
-              <p className="text-xs text-[#8A8077]">
+              <p className="text-xs text-[#7A706A]">
                 {metadata.width} × {metadata.height} px · Original dimensions
               </p>
+
               {lastStep && (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#E8EFEA] text-[#36533E] border border-[#D0E0D4] mt-1">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#E8EFEA] text-[#36533E] border border-[#D0E2D4] mt-2">
                   <span>✓</span>
                   <span>{lastStep.label} applied</span>
                 </div>
@@ -147,8 +110,8 @@ export default function ExportCenterPage() {
             </div>
           </div>
 
-          {/* Right Column: Export Settings Card */}
-          <div className="lg:col-span-5 bg-white rounded-3xl border border-[#EAE2D6] p-6 shadow-card space-y-5">
+          {/* Right Column: Export Settings (Figma 3:319) */}
+          <div className="lg:col-span-5 bg-white rounded-3xl border border-[#EAE2D6] p-5 sm:p-6 shadow-card space-y-5">
             <div>
               <h3 className="font-serif font-bold text-lg text-[#2D2623]">
                 Make it ready to keep
@@ -158,214 +121,166 @@ export default function ExportCenterPage() {
               </p>
             </div>
 
-            {/* File Name Field */}
+            {/* File Name Input */}
             <div className="space-y-1.5">
-              <label
-                htmlFor="export-filename-input"
-                className="text-xs font-semibold text-[#8A8077]"
-              >
+              <label htmlFor="export-file-name" className="text-xs font-semibold text-[#8A8077]">
                 File name
               </label>
-              <div className="relative flex items-center">
+              <div className="flex items-center bg-[#FAF7F2] border border-[#EAE2D6] rounded-xl px-3.5 py-2.5 focus-within:border-[#B8533C]">
                 <input
-                  id="export-filename-input"
+                  id="export-file-name"
                   type="text"
                   value={fileName}
                   onChange={(e) => setFileName(e.target.value)}
-                  className="w-full bg-[#FAF7F2] border border-[#EAE2D6] rounded-xl px-3.5 py-2.5 pr-14 text-xs sm:text-sm font-medium text-[#2D2623] focus:outline-none focus:border-[#B8533C]"
+                  className="bg-transparent flex-1 text-xs sm:text-sm font-medium text-[#2D2623] focus:outline-none"
                 />
-                <span className="absolute right-3.5 text-xs text-[#9E948D] font-mono pointer-events-none">
-                  {formatExt}
-                </span>
+                <span className="text-xs font-mono text-[#8A8077] pl-2">{formatExt}</span>
               </div>
             </div>
 
-            {/* Format Selection Cards */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[#8A8077]">
-                File format
-              </label>
+            {/* Format Selection Cards (Figma 3:327) */}
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-[#8A8077]">File format</div>
               <div className="grid grid-cols-3 gap-2.5">
-                {/* PNG */}
+                {/* PNG Card */}
                 <button
                   type="button"
                   onClick={() => setSelectedFormat("png")}
                   className={`p-3 rounded-2xl border text-left transition-all ${
                     selectedFormat === "png"
-                      ? "bg-[#FAF1EE] border-[#EEC7BC] shadow-xs"
+                      ? "bg-[#FAF1EE] border-[#B8533C] ring-1 ring-[#B8533C] shadow-xs"
                       : "bg-[#FAF7F2] border-[#EAE2D6] hover:bg-[#F5EFEB]"
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs sm:text-sm text-[#2D2623]">
-                      PNG
-                    </span>
-                    {selectedFormat === "png" && (
-                      <Check size={14} className="text-[#B8533C]" />
-                    )}
+                  <div className="flex justify-between items-center">
+                    <span className="font-serif font-bold text-sm text-[#2D2623]">PNG</span>
+                    {selectedFormat === "png" && <span className="text-xs text-[#B8533C]">✓</span>}
                   </div>
-                  <div className="text-[11px] text-[#7A706A] mt-1">
-                    Best quality
-                  </div>
+                  <div className="text-[11px] text-[#7A706A] mt-1">Best quality</div>
                 </button>
 
-                {/* JPG */}
+                {/* JPG Card */}
                 <button
                   type="button"
                   onClick={() => setSelectedFormat("jpeg")}
                   className={`p-3 rounded-2xl border text-left transition-all ${
                     selectedFormat === "jpeg"
-                      ? "bg-[#FAF1EE] border-[#EEC7BC] shadow-xs"
+                      ? "bg-[#FAF1EE] border-[#B8533C] ring-1 ring-[#B8533C] shadow-xs"
                       : "bg-[#FAF7F2] border-[#EAE2D6] hover:bg-[#F5EFEB]"
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs sm:text-sm text-[#2D2623]">
-                      JPG
-                    </span>
-                    {selectedFormat === "jpeg" && (
-                      <Check size={14} className="text-[#B8533C]" />
-                    )}
+                  <div className="flex justify-between items-center">
+                    <span className="font-serif font-bold text-sm text-[#2D2623]">JPG</span>
+                    {selectedFormat === "jpeg" && <span className="text-xs text-[#B8533C]">✓</span>}
                   </div>
-                  <div className="text-[11px] text-[#7A706A] mt-1">
-                    Smaller file
-                  </div>
+                  <div className="text-[11px] text-[#7A706A] mt-1">Smaller file</div>
                 </button>
 
-                {/* WebP */}
+                {/* WebP Card */}
                 <button
                   type="button"
                   onClick={() => setSelectedFormat("webp")}
                   className={`p-3 rounded-2xl border text-left transition-all ${
                     selectedFormat === "webp"
-                      ? "bg-[#FAF1EE] border-[#EEC7BC] shadow-xs"
+                      ? "bg-[#FAF1EE] border-[#B8533C] ring-1 ring-[#B8533C] shadow-xs"
                       : "bg-[#FAF7F2] border-[#EAE2D6] hover:bg-[#F5EFEB]"
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs sm:text-sm text-[#2D2623]">
-                      WebP
-                    </span>
-                    {selectedFormat === "webp" && (
-                      <Check size={14} className="text-[#B8533C]" />
-                    )}
+                  <div className="flex justify-between items-center">
+                    <span className="font-serif font-bold text-sm text-[#2D2623]">WebP</span>
+                    {selectedFormat === "webp" && <span className="text-xs text-[#B8533C]">✓</span>}
                   </div>
-                  <div className="text-[11px] text-[#7A706A] mt-1">
-                    For the web
-                  </div>
+                  <div className="text-[11px] text-[#7A706A] mt-1">For the web</div>
                 </button>
               </div>
             </div>
 
-            {/* Quality Slider (for JPG) */}
-            {selectedFormat === "jpeg" && (
-              <div className="p-3 bg-[#FAF7F2] border border-[#EAE2D6] rounded-xl space-y-1.5">
-                <div className="flex justify-between text-xs">
-                  <span className="font-medium text-[#2D2623]">
-                    JPEG Compression Quality
-                  </span>
-                  <span className="font-bold text-[#B8533C]">{jpegQuality}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="40"
-                  max="100"
-                  value={jpegQuality}
-                  onChange={(e) => setJpegQuality(parseInt(e.target.value))}
-                  className="w-full accent-[#B8533C]"
-                />
-              </div>
-            )}
-
-            {/* Quality Advice Callout */}
-            <div className="bg-[#FAF7F2] border border-[#EAE2D6] rounded-2xl p-4 space-y-1">
-              <h4 className="font-serif font-bold text-xs sm:text-sm text-[#2D2623]">
+            {/* Format Guidance Box (Figma 3:337) */}
+            <div className="bg-[#E8EFEA] border border-[#D0E2D4] rounded-2xl p-4 space-y-1">
+              <div className="font-serif font-bold text-xs text-[#36533E]">
                 {selectedFormat === "png"
                   ? "Every detail, kept intact."
                   : selectedFormat === "jpeg"
-                  ? "Compact size with great balance."
-                  : "Modern web compression."}
-              </h4>
-              <p className="text-[11px] sm:text-xs text-[#7A706A] leading-relaxed">
+                  ? "Compressed for easy sharing."
+                  : "Modern, lightweight, fast loading."}
+              </div>
+              <div className="text-[11px] text-[#556F5C] leading-relaxed">
                 {selectedFormat === "png"
-                  ? "PNG keeps full uncompressed quality, with lossless preservation of gradients and edges."
+                  ? "PNG keeps full quality, with a larger file size."
                   : selectedFormat === "jpeg"
-                  ? "Standard photographic compression suitable for sharing, email, and social media."
-                  : "Efficient web image format offering reduced byte size with high visual fidelity."}
-              </p>
+                  ? "JPG uses standard compression to save storage while looking great."
+                  : "WebP provides rich colors at ultra-compact file sizes."}
+              </div>
             </div>
 
-            {/* Dimensions Metric */}
-            <div className="flex items-center justify-between py-2 border-t border-[#EAE2D6]/80 text-xs">
+            {/* Image Dimensions Info */}
+            <div className="flex justify-between items-center text-xs py-1 border-t border-[#EAE2D6]/70">
               <span className="text-[#7A706A]">Image dimensions</span>
               <span className="font-semibold text-[#2D2623]">
                 {metadata.width} × {metadata.height} px
               </span>
             </div>
 
-            {/* Primary Download Button */}
-            <button
-              onClick={handleDownload}
-              disabled={isDownloading}
-              className="w-full bg-[#B8533C] hover:bg-[#A1422E] text-white py-3.5 rounded-xl font-medium text-xs sm:text-sm transition-all shadow-xs active:scale-[0.99] flex items-center justify-center gap-2"
-            >
-              <span>Download {selectedFormat.toUpperCase()}</span>
-              <span>↓</span>
-            </button>
+            {/* Download Button */}
+            <div className="space-y-2 pt-1">
+              <button
+                onClick={handleDownload}
+                disabled={isDownloading}
+                className="w-full bg-[#B8533C] hover:bg-[#A1422E] text-white py-3.5 rounded-xl font-medium text-xs sm:text-sm transition-all shadow-xs active:scale-[0.99] flex items-center justify-center gap-2"
+              >
+                <span>Download {selectedFormat.toUpperCase()}</span>
+                <span>↓</span>
+              </button>
 
-            {/* Processing Audit Report Option */}
-            <button
-              onClick={handleDownloadReport}
-              className="w-full py-2.5 px-3 rounded-xl border border-[#EAE2D6] bg-white text-xs font-semibold text-[#4A403A] hover:bg-[#FAF7F2] transition-colors flex items-center justify-center gap-1.5"
-            >
-              <FileText size={14} className="text-[#B8533C]" />
-              <span>Download Academic Processing Audit (.json)</span>
-            </button>
-
-            <div className="text-center text-[11px] text-[#A69D95]">
-              Your original image won&apos;t be replaced.
+              <div className="text-center text-[11px] text-[#8A8077] pt-1">
+                Your original image won’t be replaced.
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Bottom Banner (Exact match to Screenshot 3) */}
-        <div className="rounded-3xl bg-[#F6EEE3] border border-[#EAE2D6] p-6 md:p-8 mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-            {/* Left section */}
-            <div className="md:col-span-8 space-y-3">
-              <h3 className="font-serif font-bold text-lg sm:text-xl text-[#2D2623]">
-                Something lovely, made by you.
-              </h3>
-              <p className="text-xs sm:text-sm text-[#7A706A]">
-                Keep exploring with this image, or start fresh with another.
-              </p>
-              <div className="flex flex-wrap items-center gap-3 pt-1">
+        {/* Bottom Section: Keep your curiosity going (Figma 3:345) */}
+        <div className="bg-[#FAF7F2] rounded-3xl border border-[#EAE2D6] p-6 sm:p-8 shadow-soft">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+            {/* Left Content */}
+            <div className="lg:col-span-8 space-y-4">
+              <div>
+                <h3 className="font-serif font-bold text-xl sm:text-2xl text-[#2D2623]">
+                  Something lovely, made by you.
+                </h3>
+                <p className="text-xs sm:text-sm text-[#7A706A] mt-1">
+                  Keep exploring with this image, or start fresh with another.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
                 <Link
                   href="/studio/creative"
-                  className="bg-white hover:bg-[#F5EFEB] border border-[#EAE2D6] text-[#2D2623] px-4 py-2 rounded-xl font-medium text-xs sm:text-sm transition-all shadow-xs"
+                  className="bg-[#B8533C] hover:bg-[#A1422E] text-white px-5 py-3 rounded-xl font-medium text-xs sm:text-sm transition-all shadow-xs inline-flex items-center gap-1.5"
                 >
-                  Try a creative effect →
+                  <span>Try a creative effect</span>
+                  <span>→</span>
                 </Link>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="bg-white hover:bg-[#F5EFEB] border border-[#EAE2D6] text-[#2D2623] px-4 py-2 rounded-xl font-medium text-xs sm:text-sm transition-all shadow-xs"
+                  className="bg-white hover:bg-[#F5EFEB] border border-[#EAE2D6] text-[#2D2623] px-5 py-3 rounded-xl font-medium text-xs sm:text-sm transition-all shadow-xs"
                 >
                   Start with a new image
                 </button>
               </div>
             </div>
 
-            {/* Right section: Tip */}
-            <div className="md:col-span-4 border-t md:border-t-0 md:border-l border-[#EAE2D6] pt-4 md:pt-0 md:pl-6 space-y-1">
-              <div className="text-[10px] font-bold tracking-widest text-[#B8533C] uppercase">
+            {/* Right Tip Box */}
+            <div className="lg:col-span-4 bg-white rounded-2xl border border-[#EAE2D6] p-4 space-y-1 shadow-xs">
+              <span className="text-[10px] font-bold text-[#B8533C] uppercase tracking-wider">
                 One Small Tip
-              </div>
+              </span>
               <div className="font-serif font-bold text-sm text-[#2D2623]">
                 Download before you leave.
               </div>
-              <p className="text-xs text-[#7A706A]">
-                Your edits live safely in this browser session.
-              </p>
+              <div className="text-xs text-[#7A706A]">
+                Your edits live in this session.
+              </div>
             </div>
           </div>
         </div>
