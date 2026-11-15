@@ -47,3 +47,5 @@ Dual-panel + sync zoom/pan + toggle original/processed, Apply/Reset/Reset Result
 (Idle/Configuring/Processing/Completed/Failed/Cancelled), 60 metode (Basic, Histogram, Enhancement, Filtering,
 Edge, Morphology, Segmentation, Transformation), kamera + capture, History + Undo/Redo, Pipeline, Batch,
 Export (format, kualitas, resolusi, konfirmasi timpa), panel edukasi per metode, worker thread, tema dark/light.
+
+<!-- Kontribusi oleh Hasanrbn -->
