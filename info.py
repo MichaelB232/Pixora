@@ -37,6 +37,20 @@ _RAW = {
         "Memindai teks di kertas dengan bayangan di salah satu sisi.",
         "Gambar biner dengan detail lokal dan teks tetap terbaca."),
     # ---------------- Histogram ----------------
+    "Grayscale Histogram": (
+        "Grafik distribusi frekuensi intensitas keabuan (0-255).",
+        "Melihat perubahan sebaran kecerahan dan kontras secara matematis sebelum dan sesudah pemrosesan.",
+        "Diimplementasikan secara manual di algorithms/histogram.py: citra dikonversi ke grayscale BT.601 lalu dihitung jumlah kemunculan tiap nilai intensitas 0-255 dengan np.bincount (tanpa cv2.calcHist).",
+        "h(k) = jumlah piksel dengan intensitas k,  k ∈ [0, 255]",
+        "Bandingkan histogram Original vs Processed setelah Brightness atau Histogram Equalization.",
+        "Grafik kurva histogram di panel Analysis (tidak mengubah gambar)."),
+    "RGB Histogram": (
+        "Grafik distribusi frekuensi intensitas tiga kanal warna (Red, Green, Blue) sekaligus.",
+        "Menganalisis pergeseran distribusi tiap kanal warna akibat pemrosesan citra.",
+        "Diimplementasikan secara manual di algorithms/histogram.py: menghitung frekuensi 0-255 secara terpisah untuk kanal Red, Green, dan Blue menggunakan np.bincount.",
+        "h_c(k) = jumlah piksel kanal c dengan intensitas k,  c ∈ {R, G, B}",
+        "Melihat pergeseran distribusi warna setelah Negative atau Brightness.",
+        "Grafik tiga kurva warna di panel Analysis (tidak mengubah gambar)."),
     "Histogram Equalization": (
         "Meratakan distribusi intensitas piksel untuk meningkatkan kontras global gambar secara otomatis.",
         "Memperjelas gambar yang terlalu gelap, terlalu terang, atau memiliki kontras sempit (pucat/berkabut).",
@@ -104,9 +118,10 @@ def info_html(method) -> str:
     else:
         params = "<p style='margin:2px 0 6px 0'>Tidak ada parameter.</p>"
     formula = i["formula"].replace("\n", "<br>")
+    kind = "Analisis (tidak mengubah gambar)" if method.kind == "analysis" else "Pemrosesan citra (NumPy Manual)"
     return (
         f"<h3 style='margin:0'>{method.name}</h3>"
-        f"<p style='color:#8a8f9c;margin:0 0 6px 0'>{method.category} · Pemrosesan citra (NumPy Manual)</p>"
+        f"<p style='color:#8a8f9c;margin:0 0 6px 0'>{method.category} · {kind}</p>"
         f"<p><b>Deskripsi</b><br>{i['description']}</p>"
         f"<p><b>Tujuan</b><br>{i['purpose']}</p>"
         f"<p><b>Cara Kerja (Implementasi Manual)</b><br>{i['how']}</p>"

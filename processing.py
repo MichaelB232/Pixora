@@ -23,7 +23,9 @@ from algorithms import (
     apply_brightness,
     apply_equalization,
     apply_grayscale,
+    apply_grayscale_histogram,
     apply_negative,
+    apply_rgb_histogram,
     apply_sharpening,
     apply_sobel,
 )
@@ -187,9 +189,20 @@ def adaptive_threshold(img, block_size=11, c=2, method="Gaussian", **_):
 
 
 # --------------------------------------------------------------------------------------
-# 2. HISTOGRAM (Equalization)
+# 2. HISTOGRAM (Grayscale Histogram, RGB Histogram, Equalization)
 # --------------------------------------------------------------------------------------
 CAT = "Histogram"
+_SRC = C("source", "Analysis Source", ["Original Image", "Processed Image"], tip="Gambar yang dianalisis.")
+
+
+@register(CAT, "Grayscale Histogram", [_SRC], kind="analysis")
+def hist_gray(img, **_):
+    return apply_grayscale_histogram(img)
+
+
+@register(CAT, "RGB Histogram", [_SRC], kind="analysis")
+def hist_rgb(img, **_):
+    return apply_rgb_histogram(img)
 
 
 @register(CAT, "Histogram Equalization", [

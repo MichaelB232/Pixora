@@ -6,12 +6,15 @@ from .blur import apply_blur
 from .brightness import apply_brightness
 from .equalization import apply_equalization
 from .grayscale import apply_grayscale
+from .histogram import apply_grayscale_histogram, apply_rgb_histogram
 from .negative import apply_negative
 from .sharpening import apply_sharpening
 from .sobel import apply_sobel
 
 __all__ = [
     "apply_grayscale",
+    "apply_grayscale_histogram",
+    "apply_rgb_histogram",
     "apply_negative",
     "apply_sobel",
     "apply_blur",
