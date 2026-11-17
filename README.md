@@ -1,4 +1,4 @@
-# Pixel Lab – Desktop Image Processing Studio
+# Pixora – Desktop Image Processing Studio
 
 Aplikasi desktop pengolahan citra digital (Python · PySide6 · OpenCV) sesuai PRD v2.0.
 Prinsip utama: **Apply-Based Processing** – tidak ada pemrosesan tanpa tombol Apply.
@@ -10,7 +10,7 @@ pip install -r requirements.txt
 python main.py            # atau: python main.py gambar.jpg
 ```
 
-Build `.exe` Windows: jalankan `build_exe.bat` → hasil di `dist\PixelLab\PixelLab.exe`.
+Build `.exe` Windows: jalankan `build_exe.bat` → hasil di `dist\Pixora\Pixora.exe`.
 
 ## Struktur proyek
 

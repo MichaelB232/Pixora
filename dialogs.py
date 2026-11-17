@@ -1,4 +1,4 @@
-"""Pixel Lab - Dialog: Export, Batch Processing, Dokumentasi algoritma, User Guide."""
+"""Pixora - Dialog: Export, Batch Processing, Dokumentasi algoritma, User Guide."""
 from __future__ import annotations
 
 import os
@@ -314,7 +314,7 @@ class DocDialog(QDialog):
 
 
 GUIDE_HTML = """
-<h2>Pixel Lab — User Guide</h2>
+<h2>Pixora — User Guide</h2>
 <h3>Alur kerja</h3>
 <ol>
 <li><b>Buka gambar</b>: File → Open Image (Ctrl+O), drag &amp; drop ke panel kiri, atau buka kamera.</li>

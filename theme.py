@@ -1,4 +1,4 @@
-"""Pixel Lab - Tema (Dark Mode sebagai default, Light Mode opsional)."""
+"""Pixora - Tema (Dark Mode sebagai default, Light Mode opsional)."""
 from string import Template
 
 DARK = dict(

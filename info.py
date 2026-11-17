@@ -1,4 +1,4 @@
-"""Pixel Lab - Educational Information System.
+"""Pixora - Educational Information System.
 
 Setiap metode memiliki: deskripsi, tujuan, cara kerja, rumus/contoh, contoh penggunaan, dan output.
 """

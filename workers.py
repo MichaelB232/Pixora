@@ -1,4 +1,4 @@
-"""Pixel Lab - Worker thread (pemrosesan, kamera, batch) agar GUI tidak freeze."""
+"""Pixora - Worker thread (pemrosesan, kamera, batch) agar GUI tidak freeze."""
 from __future__ import annotations
 
 import os

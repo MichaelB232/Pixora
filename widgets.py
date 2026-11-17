@@ -1,12 +1,10 @@
-"""Pixel Lab - Widget kustom: ImageView (zoom/pan), ImagePanel, ParamPanel, AnalysisPanel."""
+"""Pixora - Widget kustom: ImageView (zoom/pan), ImagePanel, ParamPanel, AnalysisPanel."""
 from __future__ import annotations
 
 import os
 
 os.environ.setdefault("QT_API", "pyside6")
 
-import cv2
-import numpy as np
 from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QColor, QImage, QPainter, QPixmap
 from PySide6.QtWidgets import (
@@ -14,6 +12,8 @@ from PySide6.QtWidgets import (
     QLabel, QPlainTextEdit, QPushButton, QScrollArea, QSlider, QSpinBox, QStackedWidget,
     QToolButton, QVBoxLayout, QWidget,
 )
+import cv2
+import numpy as np
 
 import matplotlib
 

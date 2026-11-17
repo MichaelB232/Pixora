@@ -1,4 +1,4 @@
-"""Pixel Lab - Processing history (Undo / Redo) dan konversi menjadi pipeline."""
+"""Pixora - Processing history (Undo / Redo) dan konversi menjadi pipeline."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field

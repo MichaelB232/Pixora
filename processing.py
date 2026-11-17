@@ -1,4 +1,4 @@
-"""Pixel Lab - Processing Engine.
+"""Pixora - Processing Engine.
 
 Semua algoritma pengolahan citra didefinisikan di sini sebagai *registry* metode.
 Setiap metode memiliki: kategori, daftar parameter (untuk membangun UI secara dinamis),

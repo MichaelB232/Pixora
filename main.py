@@ -1,4 +1,4 @@
-"""Pixel Lab - Desktop Image Processing Studio (PySide6 + OpenCV).
+"""Pixora - Desktop Image Processing Studio (PySide6 + OpenCV).
 
 Jalankan:  python main.py
 """
@@ -9,7 +9,6 @@ import json
 import os
 import sys
 
-import cv2
 from PySide6.QtCore import QSettings, Qt
 from PySide6.QtGui import QAction, QActionGroup, QKeySequence
 from PySide6.QtWidgets import (
@@ -18,6 +17,7 @@ from PySide6.QtWidgets import (
     QSpinBox, QSplitter, QTabWidget, QTextBrowser, QToolButton, QTreeWidget, QTreeWidgetItem,
     QVBoxLayout, QWidget, QAbstractItemView,
 )
+import cv2
 
 import processing as P
 from dialogs import GUIDE_HTML, BatchDialog, DocDialog, ExportDialog
@@ -29,7 +29,7 @@ from theme import colors, stylesheet
 from widgets import AnalysisPanel, ImagePanel, ParamPanel
 from workers import CANCELLED, CameraThread, TaskWorker, detect_cameras
 
-APP_NAME = "Pixel Lab"
+APP_NAME = "Pixora"
 SAVE_FILTERS = "PNG (*.png);;JPEG (*.jpg *.jpeg);;BMP (*.bmp);;TIFF (*.tif *.tiff);;WEBP (*.webp)"
 RESOLUTIONS = [("Default", None), ("640 × 480", (640, 480)), ("1280 × 720", (1280, 720)), ("1920 × 1080", (1920, 1080))]
 CATEGORY_LABEL = {"Transformation": "Geometric Transformation"}
@@ -43,7 +43,7 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(1000, 640)
         self.setAcceptDrops(True)
 
-        self.settings = QSettings("PixelLab", "PixelLab")
+        self.settings = QSettings("Pixora", "Pixora")
         self.dark = self.settings.value("dark", True, type=bool)
 
         # ---- state ----
@@ -373,7 +373,7 @@ class MainWindow(QMainWindow):
 
     def _build_menus(self):
         mb = self.menuBar()
-        logo = QLabel("◧ PIXEL LAB")
+        logo = QLabel("◧ PIXORA")
         logo.setObjectName("logo")
         mb.setCornerWidget(logo, Qt.TopLeftCorner)
         self.theme_btn = QToolButton()

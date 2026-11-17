@@ -1,4 +1,4 @@
-"""Pixel Lab - File management (baca/tulis gambar, aman untuk path Unicode di Windows)."""
+"""Pixora - File management (baca/tulis gambar, aman untuk path Unicode di Windows)."""
 from __future__ import annotations
 
 import os
