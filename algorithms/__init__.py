@@ -7,7 +7,6 @@ from .brightness import apply_brightness
 from .canny import apply_canny
 from .contrast import apply_contrast
 from .equalization import apply_equalization
-from .gamma import apply_gamma
 from .grayscale import apply_grayscale
 from .histogram import apply_grayscale_histogram, apply_rgb_histogram
 from .negative import apply_negative
@@ -26,7 +25,6 @@ __all__ = [
     "apply_equalization",
     "apply_brightness",
     "apply_contrast",
-    "apply_gamma",
     "apply_sharpening",
     "apply_binary_threshold",
     "apply_adaptive_threshold",

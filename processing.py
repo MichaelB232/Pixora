@@ -24,7 +24,6 @@ from algorithms import (
     apply_canny,
     apply_contrast,
     apply_equalization,
-    apply_gamma,
     apply_grayscale,
     apply_grayscale_histogram,
     apply_negative,
@@ -223,7 +222,7 @@ def hist_equalization(img, mode="Luminance (color)", **_):
 
 
 # --------------------------------------------------------------------------------------
-# 3. ENHANCEMENT (Brightness, Contrast, Gamma Correction, Sharpening)
+# 3. ENHANCEMENT (Brightness, Contrast, Sharpening)
 # --------------------------------------------------------------------------------------
 CAT = "Enhancement"
 
@@ -236,11 +235,6 @@ def brightness(img, value=0, **_):
 @register(CAT, "Contrast", [I("value", "Contrast (%)", 100, 0, 300)])
 def contrast(img, value=100, **_):
     return apply_contrast(img, value=value)
-
-
-@register(CAT, "Gamma Correction", [F("gamma", "Gamma", 1.0, 0.1, 3.0, 0.05)])
-def gamma_correction(img, gamma=1.0, **_):
-    return apply_gamma(img, gamma=gamma)
 
 
 @register(CAT, "Sharpening", [

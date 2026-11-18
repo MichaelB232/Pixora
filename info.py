@@ -80,13 +80,6 @@ _RAW = {
         "s = clip((r - 128) · (pct / 100) + 128, 0, 255)",
         "Contrast 140% untuk mempertegas pemisahan terang-gelap pada foto pucat.",
         "Gambar dengan rentang kontras yang melebar atau menyempit."),
-    "Gamma Correction": (
-        "Transformasi pencahayaan non-linear (power-law) untuk mengatur tone gelap dan mid-tone.",
-        "Mencerahkan bagian gelap citra secara alami tanpa membuat area terang menjadi putih polos (clipping).",
-        "Diimplementasikan secara manual di algorithms/gamma.py: membangun Look-Up Table (LUT) 256 level dengan rumus pangkat 1/γ, lalu memetakan setiap piksel citra melalui tabel tersebut.",
-        "s = 255 · (r / 255)^(1 / γ)",
-        "γ > 1 (mis. 1.5) untuk mencerahkan detail bayangan; γ < 1 untuk menggelapkan.",
-        "Gambar dengan kurva pencahayaan mid-tone yang disesuaikan."),
     "Sharpening": (
         "Mempertajam detail tepi dan tekstur halus pada gambar.",
         "Mengurangi kesan buram ringan dan menegaskan batas antar-objek.",
