@@ -17,7 +17,7 @@ Build `.exe` Windows: jalankan `build_exe.bat` → hasil di `dist\Pixora\Pixora.
 | File | Isi |
 |---|---|
 | `main.py` | Main window, workspace dual-panel, menu, alur Apply/History/Pipeline/Kamera/Save |
-| `processing.py` | Processing engine: registry 9 algoritma + 2 analisis histogram + pipeline runner |
+| `processing.py` | Processing engine: registry 13 algoritma + 2 analisis histogram + pipeline runner |
 | `algorithms/` | Implementasi manual (pure NumPy, tanpa cv2) tiap algoritma terisolasi dalam modul/fungsi sendiri |
 | `widgets.py` | ImageView (zoom/pan/sync), panel parameter dinamis, panel analisis (histogram) |
 | `dialogs.py` | Export, Batch Processing, Algorithm Documentation, User Guide |

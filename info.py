@@ -36,6 +36,13 @@ _RAW = {
         "T(x,y) = local_mean(x,y) - C\nout(x,y) = 255 jika gray(x,y) > T(x,y), else 0",
         "Memindai teks di kertas dengan bayangan di salah satu sisi.",
         "Gambar biner dengan detail lokal dan teks tetap terbaca."),
+    "Otsu Threshold": (
+        "Menentukan nilai threshold optimal T* secara otomatis dari analisis statistik histogram.",
+        "Segmentasi objek-latar otomatis tanpa harus menebak angka threshold secara manual.",
+        "Diimplementasikan secara manual di algorithms/otsu_threshold.py: hitung distribusi probabilitas histogram, lalu evaluasi seluruh kandidat ambang T ∈ [0..254] untuk mencari nilai T* yang memaksimalkan Between-Class Variance (varians antar-kelas).",
+        "T* = argmax [ w0(T) · w1(T) · (μ0(T) - μ1(T))² ]",
+        "Memisahkan objek gelap di atas latar terang dengan histogram bimodal.",
+        "Gambar biner hasil segmentasi otomatis optimal."),
     # ---------------- Histogram ----------------
     "Grayscale Histogram": (
         "Grafik distribusi frekuensi intensitas keabuan (0-255).",
@@ -66,6 +73,20 @@ _RAW = {
         "s = clip(r + β, 0, 255)",
         "Brightness +25 untuk mencerahkan foto ruangan yang agak gelap.",
         "Gambar lebih terang atau lebih gelap."),
+    "Contrast": (
+        "Mengatur rentang perbedaan intensitas antara area terang dan area gelap secara linear.",
+        "Menajamkan atau melembutkan kontras pada gambar yang terlihat pucat.",
+        "Diimplementasikan secara manual di algorithms/contrast.py: nilai setiap piksel digeser terhadap titik tengah 128, dikalikan faktor skala persentase (pct/100), lalu digeser kembali ke +128 dan di-clip ke [0, 255].",
+        "s = clip((r - 128) · (pct / 100) + 128, 0, 255)",
+        "Contrast 140% untuk mempertegas pemisahan terang-gelap pada foto pucat.",
+        "Gambar dengan rentang kontras yang melebar atau menyempit."),
+    "Gamma Correction": (
+        "Transformasi pencahayaan non-linear (power-law) untuk mengatur tone gelap dan mid-tone.",
+        "Mencerahkan bagian gelap citra secara alami tanpa membuat area terang menjadi putih polos (clipping).",
+        "Diimplementasikan secara manual di algorithms/gamma.py: membangun Look-Up Table (LUT) 256 level dengan rumus pangkat 1/γ, lalu memetakan setiap piksel citra melalui tabel tersebut.",
+        "s = 255 · (r / 255)^(1 / γ)",
+        "γ > 1 (mis. 1.5) untuk mencerahkan detail bayangan; γ < 1 untuk menggelapkan.",
+        "Gambar dengan kurva pencahayaan mid-tone yang disesuaikan."),
     "Sharpening": (
         "Mempertajam detail tepi dan tekstur halus pada gambar.",
         "Mengurangi kesan buram ringan dan menegaskan batas antar-objek.",
@@ -89,6 +110,13 @@ _RAW = {
         "|G| = √(Gx² + Gy²)\nGx = I * Kx,   Gy = I * Ky",
         "Arah Both dengan Kernel Size 3 untuk mendeteksi seluruh tepi objek.",
         "Citra grayscale peta gradien tepi."),
+    "Canny": (
+        "Deteksi tepi multi-tahap yang menghasilkan garis tepi tipis (1 piksel), tajam, dan minim noise.",
+        "Mendapatkan kontur tepi yang akurat dan bersih dibandingkan operator gradien tunggal seperti Sobel.",
+        "Diimplementasikan secara manual 4 tahap di algorithms/canny.py: (1) Gaussian Blur 5×5, (2) Gradien Sobel Gx/Gy untuk magnitudo & sudut θ, (3) Non-Maximum Suppression (hanya puncak lokal searah θ yang dipertahankan), dan (4) Double Threshold + Hysteresis 8-tetangga.",
+        "θ = atan2(Gy, Gx)  →  NMS(0°,45°,90°,135°)  →  Hysteresis(T1, T2)",
+        "T1 = 100, T2 = 200 dengan Gaussian Blur aktif untuk memisahkan garis tepi objek.",
+        "Citra biner garis tepi tipis (0 atau 255)."),
 }
 
 CATEGORY_INFO = {

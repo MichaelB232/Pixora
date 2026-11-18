@@ -21,10 +21,14 @@ from algorithms import (
     apply_binary_threshold,
     apply_blur,
     apply_brightness,
+    apply_canny,
+    apply_contrast,
     apply_equalization,
+    apply_gamma,
     apply_grayscale,
     apply_grayscale_histogram,
     apply_negative,
+    apply_otsu_threshold,
     apply_rgb_histogram,
     apply_sharpening,
     apply_sobel,
@@ -188,6 +192,11 @@ def adaptive_threshold(img, block_size=11, c=2, method="Gaussian", **_):
     return apply_adaptive_threshold(img, block_size=block_size, c=c, method=method)
 
 
+@register(CAT, "Otsu Threshold", [C("type", "Threshold Type", _THRESH_TYPES)])
+def otsu_threshold(img, type="Binary", **_):
+    return apply_otsu_threshold(img, thresh_type=type)
+
+
 # --------------------------------------------------------------------------------------
 # 2. HISTOGRAM (Grayscale Histogram, RGB Histogram, Equalization)
 # --------------------------------------------------------------------------------------
@@ -214,7 +223,7 @@ def hist_equalization(img, mode="Luminance (color)", **_):
 
 
 # --------------------------------------------------------------------------------------
-# 3. ENHANCEMENT (Brightness, Sharpening)
+# 3. ENHANCEMENT (Brightness, Contrast, Gamma Correction, Sharpening)
 # --------------------------------------------------------------------------------------
 CAT = "Enhancement"
 
@@ -222,6 +231,16 @@ CAT = "Enhancement"
 @register(CAT, "Brightness", [I("value", "Brightness", 0, -100, 100)])
 def brightness(img, value=0, **_):
     return apply_brightness(img, value=value)
+
+
+@register(CAT, "Contrast", [I("value", "Contrast (%)", 100, 0, 300)])
+def contrast(img, value=100, **_):
+    return apply_contrast(img, value=value)
+
+
+@register(CAT, "Gamma Correction", [F("gamma", "Gamma", 1.0, 0.1, 3.0, 0.05)])
+def gamma_correction(img, gamma=1.0, **_):
+    return apply_gamma(img, gamma=gamma)
 
 
 @register(CAT, "Sharpening", [
@@ -249,7 +268,7 @@ def blur(img, method="Gaussian", ksize=5, sigma=0.0, **_):
 
 
 # --------------------------------------------------------------------------------------
-# 5. EDGE DETECTION (Sobel)
+# 5. EDGE DETECTION (Sobel, Canny)
 # --------------------------------------------------------------------------------------
 CAT = "Edge Detection"
 
@@ -260,6 +279,15 @@ CAT = "Edge Detection"
 ])
 def sobel(img, ksize="3", direction="Both", **_):
     return apply_sobel(img, ksize=ksize, direction=direction)
+
+
+@register(CAT, "Canny", [
+    I("t1", "Threshold 1 (Low)", 100, 0, 500),
+    I("t2", "Threshold 2 (High)", 200, 0, 500),
+    B("blur", "Gaussian Blur 5x5 sebelum Canny", True),
+])
+def canny(img, t1=100, t2=200, blur=True, **_):
+    return apply_canny(img, t1=t1, t2=t2, blur=blur)
 
 
 # --------------------------------------------------------------------------------------
