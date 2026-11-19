@@ -35,11 +35,14 @@ def _non_maximum_suppression(mag: np.ndarray, angle_deg: np.ndarray) -> np.ndarr
     is_90 = (deg >= 67.5) & (deg < 112.5)
     is_135 = (deg >= 112.5) & (deg < 157.5)
 
+    # Pembanding asimetris: strictly '>' terhadap tetangga "sebelum" dan '>=' terhadap
+    # tetangga "sesudah". Pada tepi tangga (dua piksel bermagnitudo sama) hanya SATU
+    # piksel yang lolos, sehingga garis tepi benar-benar setebal 1 piksel.
     keep = (
-        (is_0 & (mag >= left) & (mag >= right))
-        | (is_45 & (mag >= top_left) & (mag >= bottom_right))
-        | (is_90 & (mag >= top) & (mag >= bottom))
-        | (is_135 & (mag >= top_right) & (mag >= bottom_left))
+        (is_0 & (mag > left) & (mag >= right))
+        | (is_45 & (mag > top_left) & (mag >= bottom_right))
+        | (is_90 & (mag > top) & (mag >= bottom))
+        | (is_135 & (mag > top_right) & (mag >= bottom_left))
     )
     return np.where(keep, mag, 0.0).astype(np.float32)
 
@@ -70,8 +73,8 @@ def _hysteresis(nms: np.ndarray, t_low: float, t_high: float) -> np.ndarray:
 
 def apply_canny(
     img: np.ndarray,
-    t1: int = 100,
-    t2: int = 200,
+    t1: int = 50,
+    t2: int = 150,
     blur: bool = True,
 ) -> np.ndarray:
     """Deteksi tepi tipis dan bersih dengan algoritma Canny manual tanpa cv2.Canny."""

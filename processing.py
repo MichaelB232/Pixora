@@ -1,6 +1,7 @@
 """Pixora - Processing Engine & Registry.
 
-Menghubungkan GUI dengan 9 algoritma pengolahan citra terisolasi di paket `algorithms/`.
+Menghubungkan GUI dengan 14 metode (12 pemrosesan citra + 2 analisis histogram) yang
+diimplementasikan terisolasi di paket `algorithms/`.
 Seluruh proses pemrosesan citra di sini dan di `algorithms/` berjalan murni
 menggunakan perhitungan matematis NumPy (tanpa fungsi pemrosesan instan `cv2`).
 
@@ -276,11 +277,15 @@ def sobel(img, ksize="3", direction="Both", **_):
 
 
 @register(CAT, "Canny", [
-    I("t1", "Threshold 1 (Low)", 100, 0, 500),
-    I("t2", "Threshold 2 (High)", 200, 0, 500),
+    I("t1", "Threshold 1 (Low)", 50, 0, 500,
+      tip="Ambang bawah hysteresis. Tepi lemah diterima hanya jika terhubung ke tepi kuat. "
+          "Magnitudo gradien dihitung dengan norma L2 (sqrt(Gx²+Gy²)), sehingga nilainya lebih kecil "
+          "daripada norma L1 bawaan OpenCV; setelah blur gunakan nilai sekitar 30-150."),
+    I("t2", "Threshold 2 (High)", 150, 0, 500,
+      tip="Ambang atas: piksel dengan magnitudo >= nilai ini langsung dianggap tepi kuat."),
     B("blur", "Gaussian Blur 5x5 sebelum Canny", True),
 ])
-def canny(img, t1=100, t2=200, blur=True, **_):
+def canny(img, t1=50, t2=150, blur=True, **_):
     return apply_canny(img, t1=t1, t2=t2, blur=blur)
 
 
