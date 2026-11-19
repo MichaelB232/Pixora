@@ -33,6 +33,9 @@ htmlcov/
 *.rar
 *.7z
 *.png
+# izinkan gambar yang memang bagian dari proyek (ikon, screenshot README)
+!assets/*.png
+!docs/*.png
 
 node_modules/
 .next/
