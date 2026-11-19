@@ -119,7 +119,7 @@ class MainWindow(QMainWindow):
                     it.setToolTip(0, "Analisis — tidak mengubah gambar")
                 top.addChild(it)
                 self._tree_items[m.id] = it
-            top.setExpanded(cat == CATEGORIES[0])
+            top.setExpanded(True)
         self.tree.currentItemChanged.connect(self._tree_changed)
         self.tree.itemClicked.connect(lambda it, _c: it.setExpanded(not it.isExpanded()) if it.parent() is None else None)
         sl.addWidget(self.tree, 1)
