@@ -331,7 +331,7 @@ GUIDE_HTML = """
 <h3>Kamera</h3>
 <p>Camera → Open Camera menampilkan live preview <i>tanpa</i> pemrosesan. Pilih metode, atur parameter, tekan Apply untuk memulai Live Processing; Stop Processing menghentikannya tanpa menutup kamera. Perubahan parameter saat live baru berlaku setelah Apply ditekan lagi. Capture menjadikan frame sebagai gambar statis.</p>
 <h3>Histogram &amp; Analisis</h3>
-<p>Histogram, Image Statistics, dan Pixel Inspector adalah fitur analisis: hasilnya tampil di dock <b>Analysis</b> dan tidak mengubah gambar. Pilih sumber analisis: Original atau Processed.</p>
+<p>Grayscale Histogram dan RGB Histogram adalah fitur analisis: hasilnya tampil di dock <b>Analysis</b> dan tidak mengubah gambar. Pilih sumber analisis: Original atau Processed.</p>
 <h3>Batch</h3>
 <p>File → Batch Processing memproses banyak gambar dengan pipeline atau metode aktif. Gambar yang gagal tidak menghentikan batch.</p>
 """
