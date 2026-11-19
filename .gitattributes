@@ -1,0 +1,2 @@
+# File batch Windows harus CRLF supaya goto/label dibaca benar oleh cmd.exe
+*.bat text eol=crlf

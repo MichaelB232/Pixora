@@ -10,7 +10,19 @@ pip install -r requirements.txt
 python main.py            # atau: python main.py gambar.jpg
 ```
 
-Build `.exe` Windows: jalankan `build_exe.bat` → hasil di `dist\Pixora\Pixora.exe`.
+## Build `.exe` (Windows)
+
+```
+build_exe.bat          # hasil: dist\Pixora\Pixora.exe (tanpa konsol)
+build_exe.bat debug    # dengan konsol, untuk melihat pesan error
+```
+
+Skrip membuat virtualenv bersih `.venv-build` lalu membangun dengan PyInstaller (± 450 MB, wajar karena
+membawa Qt dan OpenCV). Bagikan **seluruh folder** `dist\Pixora`, bukan hanya `Pixora.exe`.
+
+Jika aplikasi hasil build langsung tertutup, bangun ulang dengan `build_exe.bat debug` dan baca pesan errornya.
+Jika errornya menyebut `pkg_resources` / `platformdirs`, tambahkan `--exclude-module pkg_resources` pada perintah
+PyInstaller di `build_exe.bat`. Checklist uji manual sebelum dikumpulkan: [docs/uji-manual-windows.md](docs/uji-manual-windows.md).
 
 ## Struktur proyek
 

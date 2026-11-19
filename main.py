@@ -9,6 +9,10 @@ import json
 import os
 import sys
 
+# Redam log OpenCV (mis. warning DSHOW/V4L2 saat deteksi kamera). Harus diset sebelum `import cv2`.
+os.environ.setdefault("OPENCV_LOG_LEVEL", "SILENT")
+os.environ.setdefault("OPENCV_VIDEOIO_DEBUG", "0")
+
 from PySide6.QtCore import QSettings, Qt
 from PySide6.QtGui import QAction, QActionGroup, QKeySequence
 from PySide6.QtWidgets import (

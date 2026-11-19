@@ -6,6 +6,7 @@ import sys
 import time
 import traceback
 
+os.environ.setdefault("OPENCV_LOG_LEVEL", "SILENT")  # jika workers diimpor lebih dulu dari main
 import cv2
 from PySide6.QtCore import QThread, Signal
 
