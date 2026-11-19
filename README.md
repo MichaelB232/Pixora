@@ -36,17 +36,28 @@ Build `.exe` Windows: jalankan `build_exe.bat` → hasil di `dist\Pixora\Pixora.
 
 Catatan perilaku:
 - **Apply on previous result** (kanan bawah): aktif = berantai pada hasil sebelumnya; nonaktif = dari gambar asli.
-- **Histogram/Statistics/Pixel Inspector** adalah analisis: tampil di dock *Analysis*, tidak mengubah gambar, tidak masuk History.
+- **Grayscale/RGB Histogram** adalah analisis: tampil di dock *Analysis*, tidak mengubah gambar, tidak masuk History.
 - **Kamera**: preview normal tanpa pemrosesan; Live Processing baru jalan setelah Apply; ubah parameter butuh Apply lagi; *Stop Processing* tidak menutup kamera. Resolusi kamera: menu Camera → Resolution.
 - **Pipeline** (dock): centang aktif/nonaktif, drag untuk urut ulang, Delete Step, Save/Load JSON, Run Pipeline, Batch.
-- **Resize**: mode Percent/Pixels. **Crop**: Width/Height 0 = sampai tepi. **Perspective**: titik tujuan = sudut gambar digeser (%).
+- **Canny**: magnitudo gradien memakai norma L2, jadi threshold default 50/150 (bukan 100/200 seperti contoh OpenCV yang memakai norma L1).
 - Batas History: 40 entri terakhir (menjaga memori).
 
-## Cakupan terhadap PRD
+## Cakupan saat ini
 
-Dual-panel + sync zoom/pan + toggle original/processed, Apply/Reset/Reset Result, status pemrosesan
-(Idle/Configuring/Processing/Completed/Failed/Cancelled), 60 metode (Basic, Histogram, Enhancement, Filtering,
-Edge, Morphology, Segmentation, Transformation), kamera + capture, History + Undo/Redo, Pipeline, Batch,
-Export (format, kualitas, resolusi, konfirmasi timpa), panel edukasi per metode, worker thread, tema dark/light.
+Ruang lingkup sengaja dipangkas dari rancangan awal (60 metode) menjadi **14 metode** yang ditulis manual
+dengan NumPy:
+
+| Kategori | Metode |
+|---|---|
+| Basic Processing | Grayscale, Negative, Binary Threshold, Adaptive Threshold, Otsu Threshold |
+| Histogram | Grayscale Histogram, RGB Histogram (analisis), Histogram Equalization |
+| Enhancement | Brightness, Contrast, Sharpening (Unsharp Mask / Laplacian) |
+| Filtering | Blur (Gaussian / Mean) |
+| Edge Detection | Sobel, Canny |
+
+Infrastruktur aplikasi: dual-panel + sync zoom/pan + toggle original/processed, Apply/Reset/Reset Result,
+status pemrosesan (Idle/Configuring/Processing/Completed/Failed/Cancelled), kamera + capture + live processing,
+History + Undo/Redo, Pipeline, Batch, Export (format, kualitas, resolusi, konfirmasi timpa), panel edukasi per
+metode, worker thread, tema dark/light.
 
 <!-- Kontribusi oleh Hasanrbn -->
