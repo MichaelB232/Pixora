@@ -4,7 +4,6 @@ from .adaptive_threshold import apply_adaptive_threshold
 from .binary_threshold import apply_binary_threshold
 from .blur import apply_blur
 from .brightness import apply_brightness
-from .canny import apply_canny
 from .contrast import apply_contrast
 from .equalization import apply_equalization
 from .grayscale import apply_grayscale
@@ -20,7 +19,6 @@ __all__ = [
     "apply_rgb_histogram",
     "apply_negative",
     "apply_sobel",
-    "apply_canny",
     "apply_blur",
     "apply_equalization",
     "apply_brightness",

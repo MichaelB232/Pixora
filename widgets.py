@@ -20,6 +20,7 @@ import matplotlib
 matplotlib.use("QtAgg")
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg  # noqa: E402
 from matplotlib.figure import Figure  # noqa: E402
+from matplotlib.patches import Polygon  # noqa: E402
 
 
 def to_qimage(bgr: np.ndarray) -> QImage:
@@ -425,6 +426,12 @@ class AnalysisPanel(QWidget):
         self._last = None
         self._dark = True
         self._c = dict(bg="#1e2127", fg="#e7e9ee", grid="#343944")
+        self._ax = None
+        self._lines = []
+        self._fills = []
+        self._verts = []
+        self._plot_key = None
+        self._x = np.arange(256, dtype=np.float32)
 
         lay = QVBoxLayout(self)
         lay.setContentsMargins(6, 6, 6, 6)
@@ -480,26 +487,53 @@ class AnalysisPanel(QWidget):
 
     def _plot(self, res):
         c = self._c
-        self.fig.clear()
-        self.fig.set_facecolor(c["bg"])
-        ax = self.fig.add_subplot(111)
-        ax.set_facecolor(c["bg"])
-        x = np.arange(256)
-        for name, counts, color in res["series"]:
-            ax.fill_between(x, counts, color=color, alpha=0.35, linewidth=0)
-            ax.plot(x, counts, color=color, linewidth=1.1, label=name)
-        ax.set_xlim(0, 255)
-        ax.set_xlabel("Intensitas", color=c["fg"], fontsize=8)
-        ax.set_ylabel("Jumlah piksel", color=c["fg"], fontsize=8)
-        ax.tick_params(colors=c["fg"], labelsize=8)
-        ax.grid(True, color=c["grid"], linewidth=0.5, alpha=0.7)
-        for s in ax.spines.values():
-            s.set_color(c["grid"])
-        if len(res["series"]) > 1:
-            leg = ax.legend(fontsize=8, facecolor=c["bg"], edgecolor=c["grid"])
-            for t in leg.get_texts():
-                t.set_color(c["fg"])
-        self.fig.tight_layout()
+        series = res["series"]
+        key = (self._dark, c["bg"], c["fg"], c["grid"], tuple((name, color) for name, _, color in series))
+        if key != self._plot_key or self._ax is None:
+            self.fig.clear()
+            self.fig.set_facecolor(c["bg"])
+            ax = self.fig.add_subplot(111)
+            ax.set_facecolor(c["bg"])
+            self._ax = ax
+            self._lines = []
+            self._fills = []
+            self._verts = []
+            for name, counts, color in series:
+                verts = np.zeros((258, 2), dtype=np.float32)
+                verts[1:257, 0] = self._x
+                verts[1:257, 1] = counts
+                verts[257, 0] = 255.0
+                poly = Polygon(verts, closed=True, facecolor=color, edgecolor="none", alpha=0.35)
+                ax.add_patch(poly)
+                (line,) = ax.plot(self._x, counts, color=color, linewidth=1.1, label=name)
+                self._verts.append(verts)
+                self._fills.append(poly)
+                self._lines.append(line)
+            ax.set_xlim(0, 255)
+            ax.set_xlabel("Intensitas", color=c["fg"], fontsize=8)
+            ax.set_ylabel("Jumlah piksel", color=c["fg"], fontsize=8)
+            ax.tick_params(colors=c["fg"], labelsize=8)
+            ax.grid(True, color=c["grid"], linewidth=0.5, alpha=0.7)
+            for s in ax.spines.values():
+                s.set_color(c["grid"])
+            if len(series) > 1:
+                leg = ax.legend(fontsize=8, facecolor=c["bg"], edgecolor=c["grid"])
+                for t in leg.get_texts():
+                    t.set_color(c["fg"])
+            max_y = max((float(np.max(cnt)) for _, cnt, _ in series), default=0.0)
+            ax.set_ylim(0, max(1.0, max_y * 1.08))
+            self.fig.tight_layout()
+            self._plot_key = key
+        else:
+            max_y = 0.0
+            for idx, (_name, counts, _color) in enumerate(series):
+                self._lines[idx].set_ydata(counts)
+                self._verts[idx][1:257, 1] = counts
+                self._fills[idx].set_xy(self._verts[idx])
+                m = float(np.max(counts))
+                if m > max_y:
+                    max_y = m
+            self._ax.set_ylim(0, max(1.0, max_y * 1.08))
         self.canvas.draw_idle()
 
     def update_pixel(self, which: str, x: int, y: int, bgr_img: np.ndarray):

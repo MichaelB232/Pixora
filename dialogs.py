@@ -329,9 +329,9 @@ GUIDE_HTML = """
 <h3>History &amp; Pipeline</h3>
 <p>Undo/Redo memindahkan posisi di History. Pada dock <b>Pipeline</b> Anda dapat menonaktifkan, menghapus, mengurutkan ulang (drag), menyimpan/memuat, dan menjalankan ulang rangkaian metode dari gambar asli.</p>
 <h3>Kamera</h3>
-<p>Camera → Open Camera menampilkan live preview <i>tanpa</i> pemrosesan. Pilih metode, atur parameter, tekan Apply untuk memulai Live Processing; Stop Processing menghentikannya tanpa menutup kamera. Perubahan parameter saat live baru berlaku setelah Apply ditekan lagi. Capture menjadikan frame sebagai gambar statis.</p>
+<p>Camera → Open Camera menampilkan live preview <i>tanpa</i> pemrosesan serta membuka histogram live di dock <b>Analysis</b>. Pilih metode, atur parameter, tekan Apply untuk memulai Live Processing; Stop Processing menghentikannya tanpa menutup kamera. Perubahan parameter saat live baru berlaku setelah Apply ditekan lagi. Capture menjadikan frame sebagai gambar statis.</p>
 <h3>Histogram &amp; Analisis</h3>
-<p>Grayscale Histogram dan RGB Histogram adalah fitur analisis: histogram dihitung otomatis setiap Apply dan tampil di dock <b>Analysis</b> saat fitur dipilih; tidak mengubah gambar. Ganti sumber (Original atau Processed) dan histogram langsung berubah tanpa Apply.</p>
+<p>Grayscale Histogram dan RGB Histogram adalah fitur analisis: histogram dihitung otomatis setiap Apply, tampil di dock <b>Analysis</b> saat fitur dipilih, dan diperbarui secara live saat kamera aktif; tidak mengubah gambar. Ganti sumber (Original atau Processed) dan histogram langsung berubah tanpa Apply.</p>
 <h3>Batch</h3>
 <p>File → Batch Processing memproses banyak gambar dengan pipeline atau metode aktif. Gambar yang gagal tidak menghentikan batch.</p>
 """

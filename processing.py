@@ -1,6 +1,6 @@
 """Pixora - Processing Engine & Registry.
 
-Menghubungkan GUI dengan 14 metode (12 pemrosesan citra + 2 analisis histogram) yang
+Menghubungkan GUI dengan 13 metode (11 pemrosesan citra + 2 analisis histogram) yang
 diimplementasikan terisolasi di paket `algorithms/`.
 Seluruh proses pemrosesan citra di sini dan di `algorithms/` berjalan murni
 menggunakan perhitungan matematis NumPy (tanpa fungsi pemrosesan instan `cv2`).
@@ -22,7 +22,6 @@ from algorithms import (
     apply_binary_threshold,
     apply_blur,
     apply_brightness,
-    apply_canny,
     apply_contrast,
     apply_equalization,
     apply_grayscale,
@@ -263,7 +262,7 @@ def blur(img, method="Gaussian", ksize=5, sigma=0.0, **_):
 
 
 # --------------------------------------------------------------------------------------
-# 5. EDGE DETECTION (Sobel, Canny)
+# 5. EDGE DETECTION (Sobel)
 # --------------------------------------------------------------------------------------
 CAT = "Edge Detection"
 
@@ -274,19 +273,6 @@ CAT = "Edge Detection"
 ])
 def sobel(img, ksize="3", direction="Both", **_):
     return apply_sobel(img, ksize=ksize, direction=direction)
-
-
-@register(CAT, "Canny", [
-    I("t1", "Threshold 1 (Low)", 50, 0, 500,
-      tip="Ambang bawah hysteresis. Tepi lemah diterima hanya jika terhubung ke tepi kuat. "
-          "Magnitudo gradien dihitung dengan norma L2 (sqrt(Gx²+Gy²)), sehingga nilainya lebih kecil "
-          "daripada norma L1 bawaan OpenCV; setelah blur gunakan nilai sekitar 30-150."),
-    I("t2", "Threshold 2 (High)", 150, 0, 500,
-      tip="Ambang atas: piksel dengan magnitudo >= nilai ini langsung dianggap tepi kuat."),
-    B("blur", "Gaussian Blur 5x5 sebelum Canny", True),
-])
-def canny(img, t1=50, t2=150, blur=True, **_):
-    return apply_canny(img, t1=t1, t2=t2, blur=blur)
 
 
 # --------------------------------------------------------------------------------------

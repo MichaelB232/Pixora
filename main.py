@@ -8,6 +8,7 @@ import datetime
 import json
 import os
 import sys
+import time
 
 # Redam log OpenCV (mis. warning DSHOW/V4L2 saat deteksi kamera). Harus diset sebelum `import cv2`.
 os.environ.setdefault("OPENCV_LOG_LEVEL", "SILENT")
@@ -67,6 +68,7 @@ class MainWindow(QMainWindow):
         self._last_save_path = None
         self._tree_items = {}
         self._hist_view = None  # (method_id, source) histogram yang terakhir ditampilkan
+        self._last_hist_ts = 0.0  # timestamp terakhir pembaruan histogram live
 
         self._build_central()
         self._build_docks()
@@ -337,6 +339,7 @@ class MainWindow(QMainWindow):
         # Analysis
         self.analysis = AnalysisPanel()
         self.dock_analysis = self._make_dock("Analysis", self.analysis, "dock_analysis")
+        self.dock_analysis.visibilityChanged.connect(self._on_analysis_visibility)
 
         self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_analysis)
         self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_history)
@@ -548,12 +551,14 @@ class MainWindow(QMainWindow):
             self.set_state("Configuring", m.name)
         self._update_actions()
         if self._is_hist_method(mid):  # histogram tampil langsung saat fitur dipilih (tanpa Apply)
+            self._last_hist_ts = 0.0
             self._update_histogram()
             self._show_dock(self.dock_analysis)
 
     def _on_params_changed(self):
         if self._is_hist_method(self.current_id):  # ganti Original/Processed -> histogram langsung berubah
             self.pending_lbl.setText("")
+            self._last_hist_ts = 0.0
             self._update_histogram()
             return
         self.pending_lbl.setText("● Pending changes — tekan Apply"
@@ -571,31 +576,61 @@ class MainWindow(QMainWindow):
         m = METHODS.get(mid) if mid else None
         return m is not None and m.kind == "analysis" and m.category == "Histogram"
 
+    def _active_hist_spec(self):
+        if self._is_hist_method(self.current_id):
+            mid = self.current_id
+            return mid, METHODS[mid].resolve(self.params.values()).get("source")
+        if self._hist_view and not self.analysis.inspector_active:
+            return self._hist_view
+        return None
+
+    def _on_analysis_visibility(self, visible: bool):
+        if visible and self._active_hist_spec() is not None:
+            self._last_hist_ts = 0.0
+            self._update_histogram()
+
     def _update_histogram(self):
         """Hitung ulang histogram dari gambar terkini (Original/Processed) tanpa menekan Apply.
 
-        Dipanggil saat fitur histogram dipilih, sumber diganti, dan setiap kali hasil berubah
-        (Apply, Undo/Redo, Reset). Dock Analysis hanya dimunculkan saat fitur histogram dipilih.
+        Dipanggil saat fitur histogram dipilih, sumber diganti, setiap kali hasil berubah
+        (Apply, Undo/Redo, Reset), serta secara live saat kamera aktif.
         """
-        if self._is_hist_method(self.current_id):
-            mid = self.current_id
-            source = METHODS[mid].resolve(self.params.values()).get("source")
-        elif self._hist_view and not self.analysis.inspector_active:
-            mid, source = self._hist_view  # panel masih menampilkan histogram lama -> ikut diperbarui
-        else:
+        spec = self._active_hist_spec()
+        if spec is None:
             return
+        mid, source = spec
         live = self.camera is not None
         if source == "Processed Image":
             img = self.live_processed if live else self.history.current_image()
             empty = "Belum ada gambar hasil.\nJalankan sebuah metode terlebih dahulu atau pilih sumber 'Original Image'."
         else:
             img = self.live_frame if live else self.original
-            empty = "Belum ada gambar.\nBuka gambar atau kamera terlebih dahulu."
+            empty = ("Menunggu frame kamera…" if live else
+                     "Belum ada gambar.\nBuka gambar atau kamera terlebih dahulu.")
         self._hist_view = (mid, source)
         if img is None:
             self.analysis.show_hint(empty)
             return
-        self.analysis.show_result(P.run_method(mid, img, {"source": source}))
+        res = P.run_method(mid, img, {"source": source})
+        if live:
+            res = dict(res, title=f"{res['title']} · LIVE ({source})")
+        self.analysis.show_result(res)
+
+    def _update_live_histogram(self, has_new_proc: bool):
+        """Perbarui histogram secara live saat kamera aktif (dibatasi ~10 FPS agar UI lancar)."""
+        if not self.dock_analysis.isVisible() or self.analysis.inspector_active:
+            return
+        spec = self._active_hist_spec()
+        if spec is None:
+            return
+        _mid, source = spec
+        if source == "Processed Image" and not has_new_proc and self._last_hist_ts > 0.0:
+            return
+        now = time.monotonic()
+        if now - self._last_hist_ts < 0.1:
+            return
+        self._last_hist_ts = now
+        self._update_histogram()
 
     # ======================================================================================
     # APPLY - satu-satunya titik yang menjalankan pemrosesan
@@ -657,6 +692,14 @@ class MainWindow(QMainWindow):
                     return
             else:
                 img = src_orig
+            if self._is_hist_method(m.id):
+                self._hist_view = (m.id, params.get("source"))
+                self._last_hist_ts = 0.0
+                self._show_dock(self.dock_analysis)
+                self._update_histogram()
+                self.set_state("Completed", m.name)
+                self._msg(f"Analisis: {m.name}")
+                return
             self._run_async(lambda cancel: P.run_method(m.id, img, params),
                             lambda res: self._on_analysis_done(m, res), m.name)
             return
@@ -1090,6 +1133,11 @@ class MainWindow(QMainWindow):
         self.sb_cam.setText("Camera: membuka…")
         self.peek_btn.setChecked(False)
         self.camera.start()
+        if self._hist_view is None and not self._is_hist_method(self.current_id):
+            self._hist_view = ("Histogram/RGB Histogram", "Original Image")
+        self._last_hist_ts = 0.0
+        self._show_dock(self.dock_analysis)
+        self._update_histogram()
         self.set_state("Configuring" if self.current_id else "Idle", "Live preview (tanpa pemrosesan)")
         self._update_actions()
 
@@ -1106,8 +1154,10 @@ class MainWindow(QMainWindow):
             self.live_processed = proc
             self._shown_processed = proc
             self.proc.view.set_image(proc)
-            self.proc.set_info(f"LIVE · {METHODS[self.current_id].name if self.current_id else ''} · "
-                               f"{proc.shape[1]}×{proc.shape[0]} px")
+            cam_mid = self.camera.method_id or self.current_id
+            cam_name = METHODS[cam_mid].name if cam_mid in METHODS else ""
+            self.proc.set_info(f"LIVE · {cam_name} · {proc.shape[1]}×{proc.shape[0]} px")
+        self._update_live_histogram(has_new_proc=proc is not None)
 
     def _on_cam_error(self, msg: str):
         QMessageBox.warning(self, "Camera", msg)
@@ -1136,6 +1186,7 @@ class MainWindow(QMainWindow):
         cam.deleteLater()
         self.live_frame = None
         self.live_processed = None
+        self._last_hist_ts = 0.0
         self.sb_cam.setText("Camera: Off")
         self.orig.view.set_image(self.original, refit=True)
         if self.original is not None:

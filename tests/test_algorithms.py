@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import processing as P  # noqa: E402
 from algorithms import (  # noqa: E402
-    apply_binary_threshold, apply_brightness, apply_canny, apply_contrast, apply_equalization,
+    apply_binary_threshold, apply_brightness, apply_contrast, apply_equalization,
     apply_grayscale, apply_negative, apply_otsu_threshold,
 )
 
@@ -48,25 +48,6 @@ def test_point_operations_exact():
 def test_equalization_close_to_opencv():
     d = np.abs(apply_equalization(IMG, "Grayscale").astype(int) - cv2.equalizeHist(GRAY).astype(int))
     assert (d > 0).mean() < 0.01
-
-
-def test_canny_matches_opencv_l2():
-    """NMS asimetris: tepi 1 piksel dan setara cv2.Canny(L2gradient=True)."""
-    sq = np.zeros((100, 100, 3), np.uint8)
-    cv2.rectangle(sq, (30, 30), (70, 70), (255, 255, 255), -1)
-    for blur in (False, True):
-        ours = apply_canny(sq, 50, 150, blur) > 0
-        g = cv2.GaussianBlur(cv2.cvtColor(sq, cv2.COLOR_BGR2GRAY), (5, 5), 0) if blur else cv2.cvtColor(sq, cv2.COLOR_BGR2GRAY)
-        ref = cv2.Canny(g, 50, 150, L2gradient=True) > 0
-        assert ours.sum() == ref.sum() == 160  # tepi tipis, bukan 2 piksel
-        assert (ours & ref).sum() / (ours | ref).sum() > 0.99
-    ours = apply_canny(IMG, 50, 150, True) > 0
-    ref = cv2.Canny(cv2.GaussianBlur(GRAY, (5, 5), 0), 50, 150, L2gradient=True) > 0
-    assert (ours & ref).sum() / (ours | ref).sum() > 0.9
-
-
-def test_canny_default_finds_edges():
-    assert (P.run_method("Edge Detection/Canny", IMG, {})[..., 0] > 0).sum() > 100
 
 
 def test_all_registered_methods_run_and_keep_input():

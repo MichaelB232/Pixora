@@ -103,13 +103,6 @@ _RAW = {
         "|G| = √(Gx² + Gy²)\nGx = I * Kx,   Gy = I * Ky",
         "Arah Both dengan Kernel Size 3 untuk mendeteksi seluruh tepi objek.",
         "Citra grayscale peta gradien tepi."),
-    "Canny": (
-        "Deteksi tepi multi-tahap yang menghasilkan garis tepi tipis (1 piksel), tajam, dan minim noise.",
-        "Mendapatkan kontur tepi yang akurat dan bersih dibandingkan operator gradien tunggal seperti Sobel.",
-        "Diimplementasikan secara manual 4 tahap di algorithms/canny.py: (1) Gaussian Blur 5×5, (2) Gradien Sobel Gx/Gy untuk magnitudo & sudut θ, (3) Non-Maximum Suppression (hanya puncak lokal searah θ yang dipertahankan), dan (4) Double Threshold + Hysteresis 8-tetangga.",
-        "θ = atan2(Gy, Gx)  →  NMS(0°,45°,90°,135°)  →  Hysteresis(T1, T2)",
-        "T1 = 50, T2 = 150 dengan Gaussian Blur aktif untuk memisahkan garis tepi objek (magnitudo memakai norma L2).",
-        "Citra biner garis tepi tipis (0 atau 255)."),
 }
 
 CATEGORY_INFO = {

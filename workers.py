@@ -82,6 +82,11 @@ class CameraThread(QThread):
     def processing(self) -> bool:
         return self._spec is not None
 
+    @property
+    def method_id(self):
+        spec = self._spec
+        return spec[0] if spec is not None else None
+
     def run(self):
         backend = cv2.CAP_DSHOW if sys.platform.startswith("win") else cv2.CAP_ANY
         cap = cv2.VideoCapture(self.index, backend)

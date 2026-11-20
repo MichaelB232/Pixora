@@ -29,7 +29,7 @@ PyInstaller di `build_exe.bat`. Checklist uji manual sebelum dikumpulkan: [docs/
 | File | Isi |
 |---|---|
 | `main.py` | Main window, workspace dual-panel, menu, alur Apply/History/Pipeline/Kamera/Save |
-| `processing.py` | Processing engine: registry 12 algoritma + 2 analisis histogram + pipeline runner |
+| `processing.py` | Processing engine: registry 11 algoritma + 2 analisis histogram + pipeline runner |
 | `algorithms/` | Implementasi manual (pure NumPy, tanpa cv2) tiap algoritma terisolasi dalam modul/fungsi sendiri |
 | `widgets.py` | ImageView (zoom/pan/sync), panel parameter dinamis, panel analisis (histogram) |
 | `dialogs.py` | Export, Batch Processing, Algorithm Documentation, User Guide |
@@ -48,15 +48,14 @@ PyInstaller di `build_exe.bat`. Checklist uji manual sebelum dikumpulkan: [docs/
 
 Catatan perilaku:
 - **Apply on previous result** (kanan bawah): aktif = berantai pada hasil sebelumnya; nonaktif = dari gambar asli.
-- **Grayscale/RGB Histogram** adalah analisis: tampil di dock *Analysis*, tidak mengubah gambar, tidak masuk History.
-- **Kamera**: preview normal tanpa pemrosesan; Live Processing baru jalan setelah Apply; ubah parameter butuh Apply lagi; *Stop Processing* tidak menutup kamera. Resolusi kamera: menu Camera → Resolution.
+- **Grayscale/RGB Histogram** adalah analisis: tampil di dock *Analysis*, tidak mengubah gambar, tidak masuk History, dan diperbarui secara live saat kamera aktif.
+- **Kamera**: preview normal tanpa pemrosesan (histogram langsung aktif secara live di dock *Analysis*); Live Processing baru jalan setelah Apply; ubah parameter butuh Apply lagi; *Stop Processing* tidak menutup kamera. Resolusi kamera: menu Camera → Resolution.
 - **Pipeline** (dock): centang aktif/nonaktif, drag untuk urut ulang, Delete Step, Save/Load JSON, Run Pipeline, Batch.
-- **Canny**: magnitudo gradien memakai norma L2, jadi threshold default 50/150 (bukan 100/200 seperti contoh OpenCV yang memakai norma L1).
 - Batas History: 40 entri terakhir (menjaga memori).
 
 ## Cakupan saat ini
 
-Ruang lingkup sengaja dipangkas dari rancangan awal (60 metode) menjadi **14 metode** yang ditulis manual
+Ruang lingkup sengaja dipangkas dari rancangan awal (60 metode) menjadi **13 metode** yang ditulis manual
 dengan NumPy:
 
 | Kategori | Metode |
@@ -65,7 +64,7 @@ dengan NumPy:
 | Histogram | Grayscale Histogram, RGB Histogram (analisis), Histogram Equalization |
 | Enhancement | Brightness, Contrast, Sharpening (Unsharp Mask / Laplacian) |
 | Filtering | Blur (Gaussian / Mean) |
-| Edge Detection | Sobel, Canny |
+| Edge Detection | Sobel |
 
 Infrastruktur aplikasi: dual-panel + sync zoom/pan + toggle original/processed, Apply/Reset/Reset Result,
 status pemrosesan (Idle/Configuring/Processing/Completed/Failed/Cancelled), kamera + capture + live processing,

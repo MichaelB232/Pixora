@@ -16,7 +16,7 @@ Centang tiap baris; catat yang gagal beserta pesan errornya.
 - [ ] Ubah parameter setelah Apply → hasil lama tetap sampai Apply ditekan lagi
 - [ ] Reset (parameter) tidak memproses; Reset Result mengosongkan panel kanan, gambar asli tetap
 - [ ] Gambar besar (≥ 12 MP): jendela tetap responsif saat Apply (tidak "Not Responding")
-- [ ] Semua 14 metode bisa di-Apply tanpa error
+- [ ] Semua 13 metode bisa di-Apply tanpa error
 
 ## Perbandingan & riwayat
 - [ ] Zoom roda mouse, drag untuk pan; Synchronized Zoom & Pan bekerja di kedua panel
@@ -38,7 +38,7 @@ Centang tiap baris; catat yang gagal beserta pesan errornya.
 
 ## Kamera
 - [ ] Combo kamera menampilkan "Camera 0" (atau lebih) dan tidak ada jendela konsol penuh warning
-- [ ] Open Camera → live preview; panel kanan tetap kosong sampai Apply ditekan
+- [ ] Open Camera → live preview & histogram live di dock Analysis; panel kanan tetap kosong sampai Apply ditekan
 - [ ] Apply saat kamera aktif → Live Processing; ubah parameter TIDAK berpengaruh sampai Apply lagi
 - [ ] Stop Processing menghentikan pemrosesan tanpa menutup kamera
 - [ ] Capture → gambar jadi sumber statis, bisa diproses dan disimpan
