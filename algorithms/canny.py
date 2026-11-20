@@ -77,7 +77,6 @@ def apply_canny(
     t2: int = 150,
     blur: bool = True,
 ) -> np.ndarray:
-    """Deteksi tepi tipis dan bersih dengan algoritma Canny manual tanpa cv2.Canny."""
     # Tahap 1: Konversi ke grayscale dan haluskan dengan Gaussian 5x5 (opsional)
     gray = to_gray_float(img)
     if blur:
