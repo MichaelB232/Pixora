@@ -66,6 +66,7 @@ class MainWindow(QMainWindow):
         self._batch_dialog = None
         self._last_save_path = None
         self._tree_items = {}
+        self._hist_view = None  # (method_id, source) histogram yang terakhir ditampilkan
 
         self._build_central()
         self._build_docks()
@@ -546,8 +547,15 @@ class MainWindow(QMainWindow):
         if self._has_source():
             self.set_state("Configuring", m.name)
         self._update_actions()
+        if self._is_hist_method(mid):  # histogram tampil langsung saat fitur dipilih (tanpa Apply)
+            self._update_histogram()
+            self._show_dock(self.dock_analysis)
 
     def _on_params_changed(self):
+        if self._is_hist_method(self.current_id):  # ganti Original/Processed -> histogram langsung berubah
+            self.pending_lbl.setText("")
+            self._update_histogram()
+            return
         self.pending_lbl.setText("● Pending changes — tekan Apply"
                                  + (" (live masih memakai parameter sebelumnya)" if self.camera and self.camera.processing else ""))
         if self._has_source() and not self.busy:
@@ -557,6 +565,37 @@ class MainWindow(QMainWindow):
         """Kembalikan parameter ke default. Tidak menjalankan pemrosesan; hasil lama tetap tampil."""
         self.params.reset()
         self.pending_lbl.setText("")
+
+    # ---- Histogram otomatis (Grayscale & RGB) ----
+    def _is_hist_method(self, mid) -> bool:
+        m = METHODS.get(mid) if mid else None
+        return m is not None and m.kind == "analysis" and m.category == "Histogram"
+
+    def _update_histogram(self):
+        """Hitung ulang histogram dari gambar terkini (Original/Processed) tanpa menekan Apply.
+
+        Dipanggil saat fitur histogram dipilih, sumber diganti, dan setiap kali hasil berubah
+        (Apply, Undo/Redo, Reset). Dock Analysis hanya dimunculkan saat fitur histogram dipilih.
+        """
+        if self._is_hist_method(self.current_id):
+            mid = self.current_id
+            source = METHODS[mid].resolve(self.params.values()).get("source")
+        elif self._hist_view and not self.analysis.inspector_active:
+            mid, source = self._hist_view  # panel masih menampilkan histogram lama -> ikut diperbarui
+        else:
+            return
+        live = self.camera is not None
+        if source == "Processed Image":
+            img = self.live_processed if live else self.history.current_image()
+            empty = "Belum ada gambar hasil.\nJalankan sebuah metode terlebih dahulu atau pilih sumber 'Original Image'."
+        else:
+            img = self.live_frame if live else self.original
+            empty = "Belum ada gambar.\nBuka gambar atau kamera terlebih dahulu."
+        self._hist_view = (mid, source)
+        if img is None:
+            self.analysis.show_hint(empty)
+            return
+        self.analysis.show_result(P.run_method(mid, img, {"source": source}))
 
     # ======================================================================================
     # APPLY - satu-satunya titik yang menjalankan pemrosesan
@@ -691,6 +730,7 @@ class MainWindow(QMainWindow):
         self._refresh_processed()
         self._refresh_history_list()
         self._update_actions()
+        self._update_histogram()
 
     def _refresh_processed(self):
         if self.camera is not None:  # saat live, panel hasil dikendalikan frame kamera

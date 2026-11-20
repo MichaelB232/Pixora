@@ -434,7 +434,7 @@ class AnalysisPanel(QWidget):
         self.stack = QStackedWidget()
         lay.addWidget(self.stack, 1)
 
-        self.hint = QLabel("Pilih metode di kategori Histogram lalu tekan Apply.\nHasil analisis tidak mengubah gambar.")
+        self.hint = QLabel("Pilih Grayscale Histogram atau RGB Histogram di kategori Histogram.\nHistogram dihitung otomatis dan tidak mengubah gambar.")
         self.hint.setObjectName("muted")
         self.hint.setAlignment(Qt.AlignCenter)
         self.stack.addWidget(self.hint)
@@ -456,6 +456,12 @@ class AnalysisPanel(QWidget):
         self._c = dict(bg=colors["surface"], fg=colors["text"], grid=colors["border"])
         if self._last and self._last.get("type") == "histogram":
             self.show_result(self._last)
+
+    def show_hint(self, text: str):
+        self._last = None
+        self.inspector_active = False
+        self.hint.setText(text)
+        self.stack.setCurrentWidget(self.hint)
 
     def show_result(self, res: dict):
         self._last = res
