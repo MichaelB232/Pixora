@@ -85,7 +85,7 @@ def convolve_separable(img: np.ndarray, k1d: np.ndarray) -> np.ndarray:
     """Konvolusi separable manual: pass horizontal (1D) diikuti pass vertikal (1D).
 
     Secara matematis ekuivalen dengan konvolusi 2D untuk kernel yang dapat dipisah
-    (seperti Gaussian dan Mean), dengan kompleksitas O(2k) alih-alih O(k^2).
+    (seperti Gaussian dan Mean),
     """
     ksize = len(k1d)
     pad = ksize // 2

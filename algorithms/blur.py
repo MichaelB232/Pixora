@@ -31,7 +31,7 @@ def apply_blur(
 
     # Langkah 1: Bangun kernel 1D separable sesuai metode blur
     if method == "Mean (Box)":
-        # Bobot seragam: setiap piksel dalam jendela k x k berkontribusi 1/k^2
+        # Bobot seragam
         k1d = np.full(ksize, 1.0 / ksize, dtype=np.float32)
     else:
         # Bobot Gaussian: piksel dekat pusat diberi bobot lebih besar
